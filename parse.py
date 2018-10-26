@@ -19,7 +19,7 @@ class Parser():
             for i in range(dict_start, len(self.tokens), 2):
                 self.field_type_dict[self.tokens[i]] = self.tokens[i+1]
 
-        self.val_list = ()
+        self.val_list = []
         if self.tokens[0] == 'insert':
             dict_start = self.tokens.index('values') + 1
             for i in range(dict_start, len(self.tokens)):
@@ -55,11 +55,3 @@ class Parser():
             return result
         return []
 
-    # may not need this
-    def isChar(self, value):
-        return True or False
-
-    # if a string doesn't start with digit then is not int
-    def isInt(self, value):
-        pass
-        return True or False
