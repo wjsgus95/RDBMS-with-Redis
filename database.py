@@ -29,15 +29,23 @@ class DataBase():
             return
         self.table_nr += 1
 
-        key_val_dict = self.parser.get_key_val_dict()
-        for key in key_val_dict:
-            self.redis.hset(self.parser.get_table_name()+':0', key, key_val_dict[key])
+        field_type_dict = self.parser.get_field_type_dict()
+        print(field_type_dict)
+        for field in field_type_dict:
+            self.redis.hset(self.parser.get_table_name()+':0', field, field_type_dict[field])
         self.show()
         return
 
     def insert(self):
         self.redis.hgetall(self.parser.get_table_name()+':0')
         val_list = self.parser.get_val_list()
+        #1
+        #type_list = []
+        #try:
+        #    pass
+        #except:
+        #    pass
+        #\1
         pass
         return
 

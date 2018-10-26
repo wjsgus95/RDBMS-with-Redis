@@ -13,11 +13,11 @@ class Parser():
         self.tokens = shlex.split(statement)
         print(statement)
 
-        self.key_val_dict = {}
+        self.field_type_dict = {}
         if self.tokens[0] == 'create':
             dict_start = self.tokens.index('table') + 2
             for i in range(dict_start, len(self.tokens), 2):
-                self.key_val_dict[self.tokens[i]] = self.tokens[i+1]
+                self.field_type_dict[self.tokens[i]] = self.tokens[i+1]
 
         self.val_list = ()
         if self.tokens[0] == 'insert':
@@ -26,8 +26,8 @@ class Parser():
                 self.val_list.append(self.tokens[i])
 
     # for create operation
-    def get_key_val_dict(self):
-        return self.key_val_dict
+    def get_field_type_dict(self):
+        return self.field_type_dict
 
     # for insert operation
     def get_val_list(self):
@@ -54,3 +54,12 @@ class Parser():
                 result.append(self.tokens[i])
             return result
         return []
+
+    # may not need this
+    def isChar(self, value):
+        return True or False
+
+    # if a string doesn't start with digit then is not int
+    def isInt(self, value):
+        pass
+        return True or False
