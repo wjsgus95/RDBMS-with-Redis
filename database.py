@@ -1,8 +1,8 @@
 from parse import Parser
 
-# legal operations (tentative)
-ops = ['show', 'create', 'insert', 'select']
-# legal data types (tentative)
+# legal operations
+ops = ['show', 'create', 'insert', 'select', 'delete', 'update']
+# legal data types
 types = ['int', 'char']
 
 class DataBase():
@@ -16,6 +16,9 @@ class DataBase():
         self.parser = Parser(statement)
 
     def show(self):
+        if self.parser.tokens.pop(0).lower() != 'tables':
+            print("tables expected")
+            return
         print("=================")
         print("Table list")
         print("=================")
@@ -67,6 +70,9 @@ class DataBase():
         for i in range(len(type_list)):
             try:
                 if type_list[i] == 'int':
+                    if type_list[i].lower() == 'null':
+                        type_list[i] = type_list[i].lower()
+                        continue
                     eval(type_list[i])(val_list[i])
             except ValueError:
                 # error message (tentative)
@@ -77,22 +83,27 @@ class DataBase():
         insert_dict = dict(zip(field_list, val_list))
 
         self.redis.hmset(table+':'+str(int(self.redis.zscore('table', table))), insert_dict)
-        print("insert to hash " + table+':'+str(int(self.redis.zscore('table', table))))
+        #print("insert to hash " + table+':'+str(int(self.redis.zscore('table', table))))
         self.redis.zincrby('table', table)
 
         return
 
     # mjp
     def select(self):
-        pass
+        columns = self.parser.get_column_names()
+        print(columns)
+
+        tables =  self.parser.get_table_names()
+        print(tables)
+        
         return
 
     def run_query(self):
-        if self.parser.tokens[0] not in ops:
+        if self.parser.tokens[0].lower() not in ops:
             # error message (tentative)
-            print("SQL syntax error")
+            print("Unrecognized command")
             return
 
-        expression = "self." + self.parser.tokens[0] + "()"
+        expression = "self." + self.parser.tokens.pop(0).lower() + "()"
         eval(expression)
 
