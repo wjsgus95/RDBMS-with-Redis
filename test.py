@@ -1,17 +1,32 @@
 import redis
+import subprocess
 from time import *
+from rediscluster import StrictRedisCluster
+
+local = '127.0.0.1'
+redis_dir = 'redis'
+cluster_dir = f'{redis_dir}/utils/create-cluster'
+
+cluster_spec = [{"host":local, "port":"6379"}, {"host":local, "port":"6380"}, {"host":local, "port":"6381"}]
+
+subprocess.run([f"./{cluster_dir}/create-cluster", "stop"])
+redis_server = subprocess.run([f"./{cluster_dir}/create-cluster", "start"])
+redis_server = subprocess.run([f"./{cluster_dir}/create-cluster", "create"])
+
+r = redis.StrictRedisCluster(startup_nodes=cluster_spec)
 
 N = 100000
 print(f'N = {N}\n')
-
-r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 def benchmark_callback(plan):
     r.flushall()
     start = time()
     plan()
-    print(f'{str(plan).split()[1]} : {round(time()-start, 2)}s', end =', ')
-    print(r.info('memory')['used_memory_human'])
+    print(f'{str(plan).split()[1]} : {round(time()-start, 2)}s')
+    print('node 127.0.0.1:6379', r.info('memory')['127.0.0.1:6379']['used_memory_human'])
+    print('node 127.0.0.1:6380', r.info('memory')['127.0.0.1:6380']['used_memory_human'])
+    print('node 127.0.0.1:6381', r.info('memory')['127.0.0.1:6381']['used_memory_human'])
+    print()
 
 def set_insertion():
     r.hmset("student", {"id": "int", "name": "char"})
@@ -44,3 +59,6 @@ benchmarks = [eval(elt) for elt in benchmarks]
 
 for benchmark in benchmarks:
     benchmark_callback(benchmark)
+    
+subprocess.run([f"./{cluster_dir}/create-cluster", "stop"])
+subprocess.run([f"./{cluster_dir}/create-cluster", "clean"])
