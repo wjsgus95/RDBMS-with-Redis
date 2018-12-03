@@ -2,6 +2,8 @@ import redis
 import sys
 import signal
 
+from multiprocessing import *
+
 from database import *
 from parse import Parser
 
