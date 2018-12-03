@@ -9,7 +9,7 @@ class DataBase():
     def __init__(self, redis):
         self.parser = Parser()
         self.redis = redis
-        self.table_nr = self.redis.zcard('table')
+        #self.table_nr = self.redis.zcard('table')
 
     # called upon new query from stdin
     def update_query(self, statement):
