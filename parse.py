@@ -6,23 +6,29 @@ class Parser():
         if statement == '':
             return
         statement = statement.replace(';', '')
-        statement = statement.replace('(', ' ')
-        statement = statement.replace(')', ' ')
-        statement = statement.replace(',', ' ')
+        statement = statement.replace('(', '( ')
+        statement = statement.replace(')', ' )')
+        statement = statement.replace(',', ' , ')
         self.tokens = shlex.split(statement)
 
         self.op = self.tokens[0].lower()
 
         self.field_type_dict = {}
         if self.tokens[0].lower() == 'create':
-            dict_start = self.tokens.index('table') + 2
-            for i in range(dict_start, len(self.tokens), 2):
+            #dict_start = self.tokens.index('table') + 2
+            #for i in range(dict_start, len(self.tokens), 2):
+            #    self.field_type_dict[self.tokens[i]] = self.tokens[i+1]
+            dict_start = self.tokens.index('table') + 3
+            assert self.tokens[self.tokens.index('table')+2] == '('
+            for i in range(dict_start, len(self.tokens), 3):
                 self.field_type_dict[self.tokens[i]] = self.tokens[i+1]
+                assert self.tokens[i+2] == ','
 
         self.val_list = []
         if self.tokens[0].lower() == 'insert':
-            dict_start = self.tokens.index('values') + 1
-            for i in range(dict_start, len(self.tokens)):
+            #dict_start = self.tokens.index('values') + 1
+            dict_start = self.tokens.index('values') + 2
+            for i in range(dict_start, len(self.tokens)-1):
                 self.val_list.append(self.tokens[i])
 
     # for create operation
@@ -58,10 +64,14 @@ class Parser():
     def get_table_names(self):
         if self.get_op() == 'select':
             result = []
-            while len(self.tokens) > 0 and self.tokens[0].lower() != 'where':
+            while len(self.tokens) > 0 and self.tokens[0].lower() != 'where' and self.tokens[0] != ',':
                 result.append(self.tokens.pop(0))
             return result
         return None
 
-    #def get_predicates(self):
-    #    pass
+    def get_predicates(self):
+        if self.tokens[0].lower() != 'where':
+            return None
+        else:
+            self.tokens.pop(0)
+            return predicate

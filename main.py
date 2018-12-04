@@ -17,6 +17,7 @@ def sig_handler(sig, frame):
     sys.exit(0)
 
 signal.signal(signal.SIGINT, sig_handler)
+signal.signal(signal.SIGTSTP, sig_handler)
 
 local = '127.0.0.1'
 redis_dir = 'redis'

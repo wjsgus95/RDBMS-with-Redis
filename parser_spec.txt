@@ -1,0 +1,29 @@
+parse_create()
+    return dict(
+        table: str(table name)
+        col_name: list(str(column names))
+        col_type: list(str(column data types))
+        col_dict: dict(zip(col_name, col_type))
+    )
+
+parse_show()
+    return dict(
+        table: str(table name)
+    )
+
+parse_insert()
+    return dict(
+        table: str(table name)
+        col_val: list(str(column values))
+    )
+
+parse_select()
+    return dict(
+        cols: list(str(column names))
+        tables: list(str(table names))
+        predicates: have to decide after implementing "select *"
+    )
+
+# later for now
+parse_delete()
+parse_update()

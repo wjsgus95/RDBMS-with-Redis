@@ -13,8 +13,7 @@ class DataBase():
 
     # called upon new query from stdin
     def update_query(self, statement):
-        #self.parser = Parser(statement)
-        self.statement = Parser(statement)
+        self.parser = Parser(statement)
 
     def show(self):
         if self.parser.tokens.pop(0).lower() != 'tables':

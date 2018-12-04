@@ -15,7 +15,7 @@ redis_server = subprocess.run([f"./{cluster_dir}/create-cluster", "create"])
 
 r = redis.StrictRedisCluster(startup_nodes=cluster_spec)
 
-N = 100000
+N = 50000
 print(f'N = {N}\n')
 
 def benchmark_callback(plan):
@@ -27,17 +27,6 @@ def benchmark_callback(plan):
     print('node 127.0.0.1:6380', r.info('memory')['127.0.0.1:6380']['used_memory_human'])
     print('node 127.0.0.1:6381', r.info('memory')['127.0.0.1:6381']['used_memory_human'])
     print()
-
-def set_insertion():
-    r.hmset("student", {"id": "int", "name": "char"})
-    for i in range(N):
-        r.set(f'student:{i}:{0}', '1234567890')
-        r.set(f'student:{i}:{1}', 'jason whatever')
-    
-def hashset_insertion():
-    r.hmset("student", {"id": "int", "name": "char"})
-    for i in range(N):
-        r.hmset(f'student:{i}', {"id": "1234567890", "name": "jason whatever"})
 
 def linked_list_insertion():
     for i in range(N):
@@ -51,10 +40,22 @@ def linked_list_per_col_insertion():
         r.lpush('student:0', '1234567890')
         r.lpush('student:1', 'jason whatever')
 
+def set_insertion():
+    r.hmset("student", {"id": "int", "name": "char"})
+    for i in range(N):
+        r.set(f'student:{i}:{0}', '1234567890')
+        r.set(f'student:{i}:{1}', 'jason whatever')
+    
+def hashset_insertion():
+    r.hmset("student", {"id": "int", "name": "char"})
+    for i in range(N):
+        r.hmset(f'student:{i}', {"id": "1234567890", "name": "jason whatever"})
+
+
 
 # put locally defined functions in a list
 benchmarks = [function[0] for function in locals().items() if 'function' in str(function[1]) and 'at' in str(function[1])]
-benchmarks = benchmarks[1:]
+benchmarks = benchmarks[1:] # remove callback function itself
 benchmarks = [eval(elt) for elt in benchmarks]
 
 for benchmark in benchmarks:
