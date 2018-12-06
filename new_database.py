@@ -13,25 +13,20 @@ class DataBase():
 
     # called upon new query from stdin
     def update_query(self, statement):
-        self.parser = Parser(statement)
+        #self.parser = Parser(statement)
+        self.statement = statement
 
     def show(self):
-        if self.parser.tokens.pop(0).lower() != 'tables':
-            print("tables expected")
-            return
         print("=================")
         print("Table list")
         print("=================")
-        #tables = [x.decode() for x in self.redis.zrange('table', 0, -1)]
         [print(x.decode()) for x in self.redis.smembers('table')]
-        #for table in tables:
-        #    print(table)
         print("=================")
 
     def create(self):
-        table = self.parser.get_table_name()
-        #if self.redis.zscore('table', table) is not None:
-        if self.redis.sismember('table', table):
+        qeury = parse_create(self.statement)
+
+        if self.redis.sismember('table', query['table']):
             # error message (tentative)
             print("table already exists")
             return
@@ -55,7 +50,9 @@ class DataBase():
         return
 
     def insert(self):
-        table = self.parser.get_table_name()
+        query = parse_insert(statement)
+
+        #table = self.parser.get_table_name()
         type_list = self.redis.hvals(table+':0')
         if len(type_list) == 0:
             # error message (tentative)
@@ -97,26 +94,26 @@ class DataBase():
         return
 
     def select(self):
-        columns = self.parser.get_column_names()
-        print(columns)
-
-        tables = self.parser.get_table_names()
-        print(tables)
+        query = parse_select(self.statement)
         
         return
 
     def delete(self):
-        pass
+        query = parse_delete(self.statement)
+
+        return
 
     def update(self):
-        pass
+        query = parse_update(self.statement)
+
+        return
 
     def run_query(self):
-        if self.parser.tokens[0].lower() not in ops:
+        if self.statement.split()[0].lower() not in ops:
             # error message (tentative)
             print("Unrecognized operation")
             return
 
-        expression = "self." + self.parser.tokens.pop(0).lower() + "()"
+        expression = "self." + self.statement.split()[0].lower() + "()"
         eval(expression)
 
