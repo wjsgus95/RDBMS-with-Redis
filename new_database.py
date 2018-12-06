@@ -23,6 +23,14 @@ class DataBase():
         [print(x.decode()) for x in self.redis.smembers('table')]
         print("=================")
 
+    '''
+    query :=  dict(
+        table: str(table name)
+        col_name: list(str(column names))
+        col_type: list(str(column data types))
+        col_dict: dict(zip(col_name, col_type))
+    )
+    '''
     def create(self):
         qeury = parse_create(self.statement)
 
