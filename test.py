@@ -33,6 +33,7 @@ def linked_list_insertion():
     for i in range(N):
         r.lpush('student', '1234567890')
         r.lpush('student', 'jason whatever')
+        r.lpush('student', 'computer science')
 
 # most tempting
 def linked_list_per_col_insertion():
@@ -40,17 +41,24 @@ def linked_list_per_col_insertion():
     for i in range(N):
         r.lpush('student:0', '1234567890')
         r.lpush('student:1', 'jason whatever')
+        r.lpush('student:2', 'computer science')
 
 def set_insertion():
     r.hmset("student", {"id": "int", "name": "char"})
     for i in range(N):
         r.set(f'student:{i}:{0}', '1234567890')
         r.set(f'student:{i}:{1}', 'jason whatever')
+        r.set(f'student:{i}:{2}', 'computer science')
     
 def hashset_insertion():
+    r.hmset("student", {"id": "int", "name": "char", 'dept':'char'})
+    for i in range(N):
+        r.hmset(f'student:{i}', {"id": "1234567890", "name": "jason whatever", 'dept': 'computer science'})
+
+def sadd_insertion():
     r.hmset("student", {"id": "int", "name": "char"})
     for i in range(N):
-        r.hmset(f'student:{i}', {"id": "1234567890", "name": "jason whatever"})
+        r.sadd(f'student:{i}', '1234567890\0jason whatever\0computer science')
 
 
 
