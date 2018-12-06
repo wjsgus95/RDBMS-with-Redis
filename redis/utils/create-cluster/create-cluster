@@ -3,7 +3,7 @@
 # Settings
 PORT=6378
 TIMEOUT=5000
-NODES=3
+NODES=4
 REPLICAS=0
 
 # You may want to put the above config parameters into config.sh in order to

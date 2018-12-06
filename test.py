@@ -26,6 +26,7 @@ def benchmark_callback(plan):
     print('node 127.0.0.1:6379', r.info('memory')['127.0.0.1:6379']['used_memory_human'])
     print('node 127.0.0.1:6380', r.info('memory')['127.0.0.1:6380']['used_memory_human'])
     print('node 127.0.0.1:6381', r.info('memory')['127.0.0.1:6381']['used_memory_human'])
+    print('node 127.0.0.1:6382', r.info('memory')['127.0.0.1:6381']['used_memory_human'])
     print()
 
 def linked_list_insertion():

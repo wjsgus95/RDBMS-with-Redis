@@ -24,7 +24,7 @@ class DataBase():
         print("=================")
 
     '''
-    query :=  dict(
+    query = dict(
         table: str(table name)
         col_name: list(str(column names))
         col_type: list(str(column data types))
@@ -39,70 +39,43 @@ class DataBase():
             print("table already exists")
             return
 
-        field_type_dict = self.parser.get_field_type_dict()
-        assert len(field_type_dict) > 0
-        print(field_type_dict.values())
-        if not all(type in types for type in field_type_dict.values()):
-            # error message (tentative)
-            print("invalid data type")
-            return
-
-        self.redis.hmset(table+':0', field_type_dict)
-
-        #self.redis.zadd('table', 0, table)
-        #self.redis.zincrby('table', table)
-        self.redis.sadd('table', table)
-        #self.table_nr = self.redis.zcard('table')
+        self.redis.hmset(f'{query["table"]}:0', query['col_dict')
+        self.redis.sadd('table', query['table'])
 
         self.show()
         return
 
+    '''
+    query = dict(
+        table: str(table name)
+        col_val: list(str(column values))
+    )
+    '''
     def insert(self):
         query = parse_insert(statement)
 
-        #table = self.parser.get_table_name()
-        type_list = self.redis.hvals(table+':0')
-        if len(type_list) == 0:
+        if not self.redis.sismember('table', query['table']):
             # error message (tentative)
-            print("table does not exist")
+            print("table doesn't exist")
             return
 
-        val_list = self.parser.get_val_list()
-
-        if len(type_list) != len(val_list):
-            # error message (tentative)
-            print("number of values mismatch")
-            return
-        
-        # number of input checking
-        assert len(type_list) == len(val_list)
-        # type checking
-        for i in range(len(type_list)):
-            try:
-                if type_list[i] == 'int':
-                    if type_list[i].lower() == 'null':
-                        type_list[i] = type_list[i].lower()
-                        continue
-                    eval(type_list[i])(val_list[i])
-            except ValueError:
-                # error message (tentative)
-                print("value type mismatch")
-                return
-        
-        field_list = self.redis.hkeys(table+':0')
-        insert_dict = dict(zip(field_list, val_list))
-
-        #self.redis.hmset(table+':'+str(int(self.redis.zscore('table', table))), insert_dict)
-        for column in insert_dict:
+        for i in range(len(query['col_val'])):
             # enclose table name with braces so all the columns fall into same slot in cluster
-            self.redis.lpush(f'{{table}}:{column}', insert_dict[column])
-        #print("insert to hash " + table+':'+str(int(self.redis.zscore('table', table))))
-        #self.redis.zincrby('table', table)
-
+            self.redis.lpush(f'{{query["table"]}}:{i}', query['col_val'][i])
+            
         return
 
+
+    '''
+    query = dict(
+        cols: list(str(column names))
+        tables: list(str(table names))
+        predicates: have to decide after implementing "select *"
+    )
+    '''
     def select(self):
         query = parse_select(self.statement)
+        self.redis.lrange(f'{query["table"]}'0, -1)
         
         return
 
