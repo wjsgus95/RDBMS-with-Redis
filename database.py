@@ -10,6 +10,9 @@ class DataBase():
         self.parser = Parser()
         self.redis = redis
         #self.table_nr = self.redis.zcard('table')
+        print("before custom cmd exec")
+        print(self.redis.execute_command(*["relselect", "owie"]))
+        print("after custom cmd exec")
 
     # called upon new query from stdin
     def update_query(self, statement):

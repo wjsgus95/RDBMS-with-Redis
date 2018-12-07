@@ -60,8 +60,6 @@ def sadd_insertion():
     for i in range(N):
         r.sadd(f'student:{i}', '1234567890\0jason whatever\0computer science')
 
-
-
 # put locally defined functions in a list
 benchmarks = [function[0] for function in locals().items() if 'function' in str(function[1]) and 'at' in str(function[1])]
 benchmarks = benchmarks[1:] # remove callback function itself
