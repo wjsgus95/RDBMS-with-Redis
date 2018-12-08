@@ -1,28 +1,34 @@
+# v1.2
 parse_create(statement)
     return dict(
         table: str(table name)
         col_name: list(str(column names))
         col_type: list(str(column data types))
-        col_dict: dict(zip(col_name, col_type))
     )
-
-# v1.0 -> v1.1
-#parse_show(statement)
-#    Not required
 
 parse_insert(statement)
     return dict(
         table: str(table name)
-        col_val: list(str(column values))
+        col_val: list(str(column name + '\r' + column values))
     )
 
 parse_select(statement)
     return dict(
-        cols: list(str(column names))
-        tables: list(str(table names))
-        predicates: have to decide after implementing "select *"
+        select: binary string (for count and sum, ':' is used)
+        from: binary string (tables splitted by '\r')
+        where: binary string if exists (for conditional operations (ex. equal, like, ...), '#' is used)
     )
 
-# later for now
-parse_delete(statement)
 parse_update(statement)
+    return dict(
+        set: binary string (table name)
+        update: binary string ('='->'#', ','->'\r')
+        where: binary string if exists (for conditional operations (ex. equal, like, ...), '#' is used)
+    )
+
+parse_delete(statement)
+    return dict(
+        from: binary string (table name)
+        where: binary string if exists (for conditional operations (ex. equal, like, ...), '#' is used)
+    )
+
