@@ -1,0 +1,12 @@
+create table student (id int, name varchar);
+create table teacher (id int, dept varchar);
+
+insert into student values(20123123, "student1" );
+insert into student values(20123193, "student2" );
+insert into student values(20132821, "student3");
+insert into student values(20132323, "student4" );
+
+insert into student values(32832223, "teacher1" );
+insert into student values(32322311, "teacher1" );
+insert into student values(32325311, "teacher1" );
+insert into student values(32329311, "teacher1" );

@@ -2120,6 +2120,11 @@ void xdelCommand(client *c);
 void xtrimCommand(client *c);
 void lolwutCommand(client *c);
 void relselectCommand(client *c);
+void relupdateCommand(client *c);
+void reldeleteCommand(client *c);
+void relcreateCommand(client *c);
+void relinsertCommand(client *c);
+void relshowCommand(client *c);
 
 #if defined(__GNUC__)
 void *calloc(size_t count, size_t size) __attribute__ ((deprecated));

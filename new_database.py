@@ -9,6 +9,7 @@ class DataBase():
     def __init__(self, redis):
         self.parser = Parser()
         self.redis = redis
+        self.redis.execute_command('relcreate', 'table1', 'id', 'name', 'int', 'varchar')
         #self.table_nr = self.redis.zcard('table')
 
     # called upon new query from stdin
@@ -20,7 +21,7 @@ class DataBase():
         print("=================")
         print("Table list")
         print("=================")
-        [print(x.decode()) for x in self.redis.smembers('table')]
+        [print(x.decode()) for x in self.redis.keys()]
         print("=================")
 
     '''
@@ -34,16 +35,20 @@ class DataBase():
     def create(self):
         qeury = parse_create(self.statement)
 
-        if self.redis.sismember('table', query['table']):
-            # error message (tentative)
-            print("table already exists")
-            return
+        #if self.redis.sismember('table', query['table']):
+        #    # error message (tentative)
+        #    print("table already exists")
+        #    return
 
-        self.redis.hmset(f'{query["table"]}:0', query['col_dict')
-        self.redis.sadd('table', query['table'])
+        #self.redis.hmset(f'{query["table"]}:0', query['col_dict')
+        #self.redis.sadd('table', query['table'])
 
+        #self.show()
+        #return
+        self.redis.execute_command('relcreate', f'query["table"]', *query['col_name'], *query['col_type'])
         self.show()
         return
+
 
     '''
     query = dict(

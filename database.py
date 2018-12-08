@@ -11,7 +11,27 @@ class DataBase():
         self.redis = redis
         #self.table_nr = self.redis.zcard('table')
         print("before custom cmd exec")
-        print(self.redis.execute_command(*["relselect", "owie"]))
+        #print(self.redis.execute_command(*["relselect", "owie", "qweq"]))
+        self.redis.set("table1", "value1")
+        self.redis.set("table2", "value2")
+        self.redis.set("table3", "value3")
+        self.redis.execute_command('relcreate', 'table4', 'id', 'name', 'int', 'varchar')
+        #nodes = self.redis.connection_pool.nodes.all_nodes()
+        #result = self.redis._execute_command_on_nodes(nodes, "relshow")
+        result = self.redis.keys()
+        print(result)
+        '''
+        print(type(result))
+        print(type(result[0]))
+        for x in range(len(result)):
+            for y in range(len(result[x])):
+                try:
+                    print(result[x][y], end='')
+                except Exception as e:
+                    print(e)
+                    pass
+        '''
+        #print([var.decode() for var in self.redis.execute_command(*["relselect", "owie", "qweq"])])
         print("after custom cmd exec")
 
     # called upon new query from stdin
@@ -19,6 +39,7 @@ class DataBase():
         #self.parser = Parser(statement)
         self.statement = Parser(statement)
 
+    # done
     def show(self):
         if self.parser.tokens.pop(0).lower() != 'tables':
             print("tables expected")
@@ -27,7 +48,7 @@ class DataBase():
         print("Table list")
         print("=================")
         #tables = [x.decode() for x in self.redis.zrange('table', 0, -1)]
-        [print(x.decode()) for x in self.redis.smembers('table')]
+        [print(x.decode()) for x in self.redis.keys()]
         #for table in tables:
         #    print(table)
         print("=================")

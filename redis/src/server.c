@@ -325,7 +325,12 @@ struct redisCommand redisCommandTable[] = {
     {"host:",securityWarningCommand,-1,"lt",0,NULL,0,0,0,0,0},
     {"latency",latencyCommand,-2,"aslt",0,NULL,0,0,0,0,0},
     {"lolwut",lolwutCommand,-1,"r",0,NULL,0,0,0,0,0},
-    {"relselect",relselectCommand,2,"r",0,NULL,1,1,1,0,0}
+    {"relselect",relselectCommand,-2,"r",0,NULL,1,1,1,0,0},
+    {"relupdate",relupdateCommand,-2,"wm",0,NULL,1,1,1,0,0},
+    {"reldelete",reldeleteCommand,-2,"w",0,NULL,1,1,1,0,0},
+    {"relcreate",relcreateCommand,-3,"wm",0,NULL,1,1,1,0,0},
+    {"relinsert",relinsertCommand,-2,"wm",0,NULL,1,1,1,0,0},
+    {"relshow",relshowCommand,0,"r",0,NULL,0,0,0,0,0}
 };
 
 /*============================ Utility functions ============================ */
