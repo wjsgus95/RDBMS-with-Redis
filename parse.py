@@ -236,7 +236,10 @@ class SelectParser:
                 for s in splitted:
                     s = s.replace('(', '')
                 select_list[i] = ':'.join([s for s in splitted if s!='']).replace('(','').replace(')','')
-        return '\r'.join(select_list)
+        for i, t in enumerate(select_list):
+            if ':' not in t:
+                select_list[i] = ':' + select_list[i]
+        return '\r'.join(select_list).replace('count:', 'c:').replace('sum:', 's:')
 
 
     def get_values(self):
@@ -319,6 +322,8 @@ class WhereParser:
             encoded3 = self.inorder_tuple_traversal(parsed[2])
             if encoded1 in ['&', '|']:
                 encoded = encoded1 + encoded2 + '\r' + encoded3
+            elif encoded3[0] == '\'' or encoded3[0] == '\"' or encoded3[0].isdigit():
+                encoded = encoded1 + encoded2 + '$' + encoded3
             else:
                 encoded = encoded1 + encoded2 + '#' + encoded3
             return encoded
@@ -342,7 +347,7 @@ class WhereParser:
         return parsed
 
     def encode(self):
-        return self.inorder_tuple_traversal(self.parse()).replace('\'', '').replace('\"', '').encode('ascii')
+        return self.inorder_tuple_traversal(self.parse()).replace('\'', '').replace('\"', '').replace('$', '\"').encode('ascii')
 
 if __name__ == "__main__":
     create_query = 'CREATE table HA_HA_HO_HO (\n    haha   VARCHAR  ,\n  he_he  INT,hohoho   varchar\n)'
@@ -350,7 +355,7 @@ if __name__ == "__main__":
     insert_query2 = 'insert into KAkaKA \n (ha, he, hu, he) \n values \t (\"hey  hey\", 10, 25, \' hallo\')'
     delete_query = 'Delete  from student ,   teacher   WHERE student.id   > teacher.id and (( (  student.name like \"Myeon%Pyeo_\"  )) or   student.dept  =   \"C/S\")'
     update_query = 'UPDATE hello SET a =   \'10\'  , b= 3, CCAAS = \"haha  \" where (a > 10 or DeF_PP like \"5%a%b_C\") and (CCB=3);'
-    select_query = 'select id,name,  count( ( dept))   , sum(adress )  From  student, teacher  WHERE (a > 10   and b !=3 ) or (cc=\'and hello\' AND dd!=\'or\') and DF LIKE \'A%b\''
+    select_query = 'select id,name,  count( ( dept))   , sum(adress )  From  student, teacher  WHERE (a > f   and b !=3 ) or (cc=\'and hello\' AND dd!=\'or\') and DF LIKE \'A%b\''
     create_parser = Parser(create_query)
     insert_parser1 = Parser(insert_query1)
     insert_parser2 = Parser(insert_query2)
