@@ -7,7 +7,7 @@ types = ['int', 'varchar']
 
 class DataBase():
     def __init__(self, redis):
-        self.parser = Parser()
+        #self.parser = Parser()
         self.redis = redis
         #self.table_nr = self.redis.zcard('table')
         print("before custom cmd exec")
