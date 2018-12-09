@@ -57,83 +57,34 @@ def split_operators(statement_list, operators):
     return modified
 
 
-
-
-class Parser():
-    # new instance of Parser constructed everytime DataBase updates query
-    def __init__(self, statement=''):
-        if statement == '':
-            return
-        statement = statement.replace(';', '')
-        statement = statement.replace('(', '( ')
-        statement = statement.replace(')', ' )')
-        statement = statement.replace(',', ' , ')
-        self.tokens = shlex.split(statement)
-
-        self.op = self.tokens[0].lower()
-
-        self.field_type_dict = {}
-        if self.tokens[0].lower() == 'create':
-            #dict_start = self.tokens.index('table') + 2
-            #for i in range(dict_start, len(self.tokens), 2):
-            #    self.field_type_dict[self.tokens[i]] = self.tokens[i+1]
-            dict_start = self.tokens.index('table') + 3
-            assert self.tokens[self.tokens.index('table')+2] == '('
-            for i in range(dict_start, len(self.tokens), 3):
-                self.field_type_dict[self.tokens[i]] = self.tokens[i+1]
-                assert self.tokens[i+2] == ','
-
-        self.val_list = []
-        if self.tokens[0].lower() == 'insert':
-            #dict_start = self.tokens.index('values') + 1
-            dict_start = self.tokens.index('values') + 2
-            for i in range(dict_start, len(self.tokens)-1):
-                self.val_list.append(self.tokens[i])
-
-    # for create operation
-    def get_field_type_dict(self):
-        return self.field_type_dict
-
-    # for insert operation
-    def get_val_list(self):
-        return self.val_list
+class Parser:
+    def __init__(self, statement):
+        self.statement = statement
+        class_dict = {
+            'create': CreateParser,
+            'insert': InsertParser,
+            'delete': DeleteParser,
+            'update': UpdateParser,
+            'select': SelectParser,
+            'show': ShowParser}
+        op = self.get_op()
+        self.op_class = class_dict[op]
 
     def get_op(self):
-        return self.op
+        return self.statement.split(' ')[0].lower()
 
-    # single table name to return in create, insert query
-    def get_table_name(self):
-        if self.get_op() == 'create':
-            return self.tokens[self.tokens.index('table')+1]
-        elif self.get_op() == 'insert':
-            return self.tokens[self.tokens.index('into')+1]
+    def get_values(self):
+        return self.op_class(self.statement).get_values()
+
+
+class ShowParser:
+    def __init__(self, statement):
+        pass
+
+    def get_values(self):
         return None
 
-    # multiple column names to return in select query
-    def get_column_names(self):
-        if self.get_op() == 'select':
-            result = []
-            while len(self.tokens) > 0 and self.tokens[0].lower() != 'from':
-                result.append(self.tokens.pop(0))
-            self.tokens.pop(0) # consume "from" token
-            return result
-        return None
 
-    # multiple table names to return in select query
-    def get_table_names(self):
-        if self.get_op() == 'select':
-            result = []
-            while len(self.tokens) > 0 and self.tokens[0].lower() != 'where' and self.tokens[0] != ',':
-                result.append(self.tokens.pop(0))
-            return result
-        return None
-
-    def get_predicates(self):
-        if self.tokens[0].lower() != 'where':
-            return None
-        else:
-            self.tokens.pop(0)
-            return predicate
 
 class CreateParser:
     def __init__(self, statement):
@@ -170,11 +121,29 @@ class InsertParser:
         insert_into = self.splitted[self.i_start: self.i_end]
         values = self.splitted[self.v_start:]
         col_specified = False
+        col_name = []
+        col_val = []
         for i, t in enumerate(insert_into):
             # to do
-            pass
-
-
+            if i == 0:
+                # table name
+                table = t
+            elif t == '(':
+                # column specification detected
+                col_specified = True
+            elif t != ')' and t != ',':
+                col_name.append(t)
+            elif t == ')':
+                break
+        for i, t in enumerate(values):
+            if t == ')':
+                break
+            elif t != '(' and t != ',':
+                col_val.append(t)
+        col_val = [s.replace('@', ' ').replace('\'', '').replace('\"', '') for s in col_val]
+        if col_specified:
+            col_val = [name+'\r'+val for name, val in zip(col_name, col_val)]
+        return {'table': table, 'col_val': col_val}
 
 
 class DeleteParser:
@@ -320,7 +289,7 @@ class WhereParser:
             self.global_header += 2
             return (self.token_list[self.global_header-2], l, self.token_list[self.global_header-1])
         else:
-            assert True,'Invalid Query: no matched condition in conditional statement or no matched bracket'
+            assert False,'Invalid Query: no matched condition in conditional statement or no matched bracket'
 
     def parse_and(self):
         l = self.parse_condition()
@@ -373,17 +342,24 @@ class WhereParser:
     def encode(self):
         return self.inorder_tuple_traversal(self.parse()).replace('\'', '').replace('\"', '').encode('ascii')
 
-create_query = 'CREATE table HA_HA_HO_HO (\n    haha   VARCHAR  ,\n  he_he  INT,hohoho   varchar\n)'
-delete_query = 'Delete  from student ,   teacher   WHERE student.id   > teacher.id and (( (  student.name like \"Myeon%Pyeo_\"  )) or   student.dept  =   \"C/S\")'
-update_query = 'UPDATE hello SET a =   \'10\'  , b= 3, CCAAS = \"haha  \" where (a > 10 or DeF_PP like \"5%a%b_C\") and (CCB=3);'
-select_query = 'select id,name,  count( ( dept))   , sum(adress )  From  student, teacher  WHERE (a > 10   and b !=3 ) or (cc=\'and hello\' AND dd!=\'or\') and DF LIKE \'A%b\''
-create_parser = CreateParser(create_query)
-delete_parser = DeleteParser(delete_query)
-update_parser = UpdateParser(update_query)
-select_parser = SelectParser(select_query)
-create_parsed = create_parser.get_values()
-delete_parsed = delete_parser.get_values()
-update_parsed = update_parser.get_values()
-select_parsed = select_parser.get_values()
-#import ipdb; ipdb.set_trace()
+if __name__ == "__main__":
+    create_query = 'CREATE table HA_HA_HO_HO (\n    haha   VARCHAR  ,\n  he_he  INT,hohoho   varchar\n)'
+    insert_query1 = 'Insert INTO hello__haha \n VALUES \n (\"hey  hey\", 10, 25, \' hallo\')'
+    insert_query2 = 'insert into KAkaKA \n (ha, he, hu, he) \n values \t (\"hey  hey\", 10, 25, \' hallo\')'
+    delete_query = 'Delete  from student ,   teacher   WHERE student.id   > teacher.id and (( (  student.name like \"Myeon%Pyeo_\"  )) or   student.dept  =   \"C/S\")'
+    update_query = 'UPDATE hello SET a =   \'10\'  , b= 3, CCAAS = \"haha  \" where (a > 10 or DeF_PP like \"5%a%b_C\") and (CCB=3);'
+    select_query = 'select id,name,  count( ( dept))   , sum(adress )  From  student, teacher  WHERE (a > 10   and b !=3 ) or (cc=\'and hello\' AND dd!=\'or\') and DF LIKE \'A%b\''
+    create_parser = Parser(create_query)
+    insert_parser1 = Parser(insert_query1)
+    insert_parser2 = Parser(insert_query2)
+    delete_parser = Parser(delete_query)
+    update_parser = Parser(update_query)
+    select_parser = Parser(select_query)
+    create_parsed = create_parser.get_values()
+    insert_parsed1 = insert_parser1.get_values()
+    insert_parsed2 = insert_parser2.get_values()
+    delete_parsed = delete_parser.get_values()
+    update_parsed = update_parser.get_values()
+    select_parsed = select_parser.get_values()
+    import ipdb; ipdb.set_trace()
 
