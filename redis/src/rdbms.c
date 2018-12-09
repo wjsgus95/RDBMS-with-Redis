@@ -183,12 +183,13 @@ void reldeleteCommand(client* c) {
 
 
 void relselectCommand(client* c) {
-    robj *o;
+    robj* tableObj = lookupKeyRead(c->db, c->argv[2]);
+    void *replylen = addDeferredMultiBulkLength(c);
 
     char* table_column_argv[100];
     int table_column_size[100];
     int table_column_argc = 0;
-    size_t current_size = 0;
+    size_t current_size = 0, numret = 0;
 
     // "table.column"s argument
     //char* iter = (char *)(c->argv[1]);
@@ -229,26 +230,25 @@ void relselectCommand(client* c) {
     //addReplyBulkCBuffer(c, "woeifj", sizeof("woeifj"));
 
     // temp
-    addReplyMultiBulkLen(c, table_column_argc);
-    //queueCommand(c);
-    for(int i = 0; i < table_column_argc; i++) {
-        addReplyBulkCBuffer(c, table_column_argv[i], table_column_size[i]);
+    //addReplyMultiBulkLen(c, table_column_argc);
 
-    //    c->mstate.commands = zrealloc(c->mstate.commands,
-    //    sizeof(multiCmd)*(c->mstate.count+1));
-    //    mc = c->mstate.commands+c->mstate.count;
-    //    mc->cmd = c->cmd;
-    //    mc->argc = c->argc;
-    //    mc->argv = zmalloc(sizeof(robj*)*c->argc);
-    //    memcpy(mc->argv,c->argv,sizeof(robj*)*c->argc);
-    //    for (j = 0; j < c->argc; j++)
-    //        incrRefCount(mc->argv[j]);
-    //    c->mstate.count++;
+    addReplyLongLong(c, table_column_argc); numret++;
+    for(int i = 0; i < table_column_argc; i++) {
+        for(int j = 0; j < tableObj->length; j++) {
+            for(int k = 0; k < tableObj->column_length; k++) {
+                if(strcmp(tableObj->column[k], table_column_argv[i]) == 0) {
+                    addReplyBulkCBuffer(c, tableObj->table[j][k], strlen(tableObj->table[j][k]));
+                    numret++;
+                }
+            }
+        }
     }
-        
+
     decrRefCount(value);
     for(int i = 0; i < table_column_argc; i++) {
         free(table_column_argv[i]);
     }
+
+    setDeferredMultiBulkLength(c,replylen,numret);
     return;
 }
