@@ -149,42 +149,43 @@ void relinsertCommand(client* c) {
 
     tableObj->table[tableObj->length] = calloc(1, tableObj->column_length);
 
-    //sds** arg_col_names = calloc(c->argc-2, sizeof(sds**));
-    //for(int i = 2; i < c->argc; i++) {
-    //    size_t name_length = 0;
-    //    for(sds* j = c->argv[i]; *j != '\r'; ((char*)j)++) {
-    //        name_length++;
-    //    }
-    //}
-
     // Note: argc not necessarily all values to be inserted (could be "column name\rcolumn value")
-    for(int i = 2; i < c->argc; i++) {
-        for(int j = 0; j < tableObj->column_length; j++) {
-            size_t iter = 0;
-            while(*(((char*)c->argv[i])+iter) != '\r') {
-                if(*(((char*)c->argv[i])+iter) != *(((char*)tableObj->column[j])+iter)) {
-                    continue;
+    if(*((char*)c->argv[2]) == '\r') {
+        for(int i = 2; i < c->argc; i++) {
+            const size_t iter = 1;
+            tableObj->table[tableObj->length][i-2] = calloc(1, sdslen(c->argv[i])-iter);
+            memcpy(tableObj->table[tableObj->length][i-2], (c->argv[i]+iter), sdslen(c->argv[i])-iter);
+        }
+    }
+    else {
+        for(int i = 2; i < c->argc; i++) {
+            for(int j = 0; j < tableObj->column_length; j++) {
+                size_t iter = 0;
+                while(*(((char*)c->argv[i])+iter) != '\r') {
+                    if(*(((char*)c->argv[i])+iter) != *(((char*)tableObj->column[j])+iter)) {
+                        break;
+                    }
+                    iter++;
                 }
+                if(*(((char *)c->argv[i])+iter) != '\r') continue;
                 iter++;
+                tableObj->table[tableObj->length][j] = calloc(1, sdslen(c->argv[i])-iter);
+                memcpy(tableObj->table[tableObj->length][j], (c->argv[i]+iter), sdslen(c->argv[i])-iter);
             }
-            iter++;
-            tableObj->table[tableObj->length][j] = calloc(1, sdslen(c->argv[i])-iter);
-            memcpy(tableObj->table[tableObj->length][j], (c->argv[i]+iter), sdslen(c->argv[i])-iter);
         }
     }
 
     //addReplyMultiBulkLen(c, tableObj->column_length);
     //queueCommand(c);
     for(int i = 0; i < tableObj->column_length; i++) {
-        if(tableObj->table[tableObj->length][i] != NULL) {
+        //if(tableObj->table[tableObj->length][i] != NULL) {
             //addReplyBulkCBuffer(c, tableObj->table[tableObj->length][i], sdslen(tableObj->table[tableObj->length][i]));
-            //addReplyBulkCBuffer(c, tableObj->column[i], sdslen(tableObj->column[i]));
-            addReplyBulkCBuffer(c, "found", sizeof("found")-1);
+            addReplyBulkCBuffer(c, tableObj->column[i], sdslen(tableObj->column[i]));
             numret++;
-        }
+        //}
     }
     
-    addReplyBulkCBuffer(c, "not found", sizeof("not found")-1); numret++;
+    //addReplyBulkCBuffer(c, "not found", sizeof("not found")-1); numret++;
     setDeferredMultiBulkLength(c,replylen,numret);
     tableObj->length++;
 }
@@ -197,8 +198,9 @@ void relcreateCommand(client* c) {
     //robj* tableObj = calloc(1, sizeof(robj));
     robj* tableObj = createRawStringObject(c->argv[1]->ptr, sdslen(c->argv[1]->ptr));
     tableObj->max_length = 4;
-    tableObj->column_length = c->argc - 2;
-    tableObj->column = calloc(1, (c->argc-2)*sizeof(char*));
+    tableObj->column_length = (c->argc - 2)/2;
+    tableObj->column = calloc(1, ((c->argc-2)/2)*sizeof(char*));
+    tableObj->col_type = calloc(1, ((c->argc-2)/2)*sizeof(char*));
 
     for(int i = 2; i <= (c->argc)/2; i++) {
         robj *arg_column = c->argv[i];
@@ -214,7 +216,7 @@ void relcreateCommand(client* c) {
     for(int i = (c->argc)/2+1; i < c->argc; i++) {
         robj *arg_col_type = c->argv[i];
         incrRefCount(arg_col_type);
-        tableObj->column[i-2] = arg_col_type->ptr;
+        tableObj->col_type[i-((c->argc)/2+1)] = arg_col_type->ptr;
     }
 
     tableObj->table = calloc(tableObj->column_length, sizeof(char**)*tableObj->max_length);

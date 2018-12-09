@@ -143,6 +143,8 @@ class InsertParser:
         col_val = [s.replace('@', ' ').replace('\'', '').replace('\"', '') for s in col_val]
         if col_specified:
             col_val = [name+'\r'+val for name, val in zip(col_name, col_val)]
+        else:
+            col_val = ['\r' + val for val in col_val]
         return {'table': table, 'col_val': col_val}
 
 
