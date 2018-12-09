@@ -97,7 +97,7 @@ class CreateParser:
         s = self.splitted.index('(') + 1
         f = self.splitted.index(')')
         table = self.splitted[s-2]
-        col_type = [v for i, v in enumerate(self.splitted[s:f]) if i % 3 == 1]
+        col_type = [v.lower() for i, v in enumerate(self.splitted[s:f]) if i % 3 == 1]
         col_name = [v for i, v in enumerate(self.splitted[s:f]) if i % 3 == 0]
         return {'table': table, 'col_type': col_type, 'col_name': col_name}
 
