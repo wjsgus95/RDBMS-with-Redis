@@ -1,7 +1,7 @@
 #include "server.h"
 //#include <stdio.h>
 
-#define need_expand(x) ((x->length >= x->max_length))
+#define need_expand(x) ((((x)->length >= (x)->max_length)))
 
 #define and(x) (x == '&');
 #define or(x) (x == '|');
@@ -126,11 +126,15 @@ void relshowCommand(client* c) {
 // explicit column specification needs to be handled
 void relinsertCommand(client* c) {
     // presumably call by reference
-    rTable* tableObj = lookupKeyRead(c->db, c->argv[1]);
+    robj* tableObj = lookupKeyRead(c->db, c->argv[1]);
     void *replylen = addDeferredMultiBulkLength(c);
     unsigned long numret = 0;
+
+    fprintf(stderr, "columns\n");
+    fprintf(stderr, "%s %s\n", tableObj->column[0], tableObj->column[1]);
+    fprintf(stderr, "%d %d\n", tableObj->length, tableObj->column_length);
+    fprintf(stderr, "%d\n", need_expand(tableObj));
     
-    /*
     // important to use calloc because empty values should hold NULL pointers
     if(need_expand(tableObj)) {
         tableObj->max_length <<= 1;
@@ -158,8 +162,9 @@ void relinsertCommand(client* c) {
         for(int j = 0; j < tableObj->column_length; j++) {
             size_t iter = 0;
             while(*(((char*)c->argv[i])+iter) != '\r') {
-                if(*(((char*)c->argv[i])+iter) != *(((char*)tableObj->column[j])+iter)) 
+                if(*(((char*)c->argv[i])+iter) != *(((char*)tableObj->column[j])+iter)) {
                     continue;
+                }
                 iter++;
             }
             iter++;
@@ -167,17 +172,19 @@ void relinsertCommand(client* c) {
             memcpy(tableObj->table[tableObj->length][j], (c->argv[i]+iter), sdslen(c->argv[i])-iter);
         }
     }
-    */
 
     //addReplyMultiBulkLen(c, tableObj->column_length);
     //queueCommand(c);
     for(int i = 0; i < tableObj->column_length; i++) {
         if(tableObj->table[tableObj->length][i] != NULL) {
             //addReplyBulkCBuffer(c, tableObj->table[tableObj->length][i], sdslen(tableObj->table[tableObj->length][i]));
-            addReplyBulkCBuffer(c, tableObj->column[i], sdslen(tableObj->column[i]));
+            //addReplyBulkCBuffer(c, tableObj->column[i], sdslen(tableObj->column[i]));
+            addReplyBulkCBuffer(c, "found", sizeof("found")-1);
             numret++;
         }
     }
+    
+    addReplyBulkCBuffer(c, "not found", sizeof("not found")-1); numret++;
     setDeferredMultiBulkLength(c,replylen,numret);
     tableObj->length++;
 }
@@ -187,28 +194,30 @@ void relcreateCommand(client* c) {
     //arg_table = getDecodedObject(arg_table);
     //sds* table = malloc(1, sdslen(arg_table));
 
-    rTable* tableObj = calloc(1, sizeof(rTable));
+    //robj* tableObj = calloc(1, sizeof(robj));
+    robj* tableObj = createRawStringObject(c->argv[1]->ptr, sdslen(c->argv[1]->ptr));
     tableObj->max_length = 4;
     tableObj->column_length = c->argc - 2;
-    tableObj->column = calloc(1, (c->argc-2)*sizeof(sds*));
+    tableObj->column = calloc(1, (c->argc-2)*sizeof(char*));
 
     for(int i = 2; i <= (c->argc)/2; i++) {
-        robj *arg_column = c->argv[1];
-        arg_column = getDecodedObject(arg_column);
+        robj *arg_column = c->argv[i];
+        //arg_column = getDecodedObject(arg_column);
         //tableObj->column[i-2] = calloc(1, size*sizeof(sds));
         // directly assigned but object created in getDecodedObject
-        tableObj->column[i-2] = arg_column;
+        incrRefCount(arg_column);
+        tableObj->column[i-2] = arg_column->ptr;
         //size_t size = sdslen(arg_column);
         //memcpy(ctableObj->column[i-2], arg_column, size);
         //decrRefCount(arg_column);
     }
     for(int i = (c->argc)/2+1; i < c->argc; i++) {
-        robj *arg_column = c->argv[1];
-        arg_column = getDecodedObject(arg_column);
-        tableObj->column[i-2] = arg_column;
+        robj *arg_col_type = c->argv[i];
+        incrRefCount(arg_col_type);
+        tableObj->column[i-2] = arg_col_type->ptr;
     }
 
-    tableObj->table = calloc(tableObj->column_length, sizeof(sds**)*tableObj->max_length);
+    tableObj->table = calloc(tableObj->column_length, sizeof(char**)*tableObj->max_length);
     //c->argv[1] copied in dictAddRaw, decrease reference to arg_table (if ref == 0 then freed)
     setKey(c->db, c->argv[1], tableObj);
     //decrRefCount(arg_table);

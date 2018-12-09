@@ -607,6 +607,12 @@ typedef struct redisObject {
                             * LFU data (least significant 8 bits frequency
                             * and most significant 16 bits access time). */
     int refcount;
+    char*** table;
+    char** column;
+    //sds* type;
+    size_t length;
+    size_t max_length;
+    size_t column_length;
     void *ptr;
 } robj;
 
