@@ -80,13 +80,43 @@ whereReturn parse_where(char* str, size_t len, robj* tableObj1, robj* tableObj2,
 }
 */
 
+char* conditional_operators[] = {
+    "=", ">", "<", "!=", "<=", ">=", "*"
+};
+
+int parse_conditional_op(char* str, int* header_point){
+    int op_length = 1;
+    char* op;
+    int i = 0;
+    int cond_op_idx;
+
+    // extract the operator
+    if str[*(header_point+1)] == '='{
+        op_length++;
+    }
+    *header_point = *header_point + op_length;
+    op = (char*) calloc(1, op_length * sizeof(char));
+    for (i=0; i<op_length; ++i){
+        op[i] = str[i];
+    }
+
+    // find where the operator exists
+    for (i=0 ; i < 7 ; ++i){
+        if (strcmp(op, conditional_operators[i]) == 0){
+            return i;
+        }
+    }
+    fprintf(stderr, "this operator is not supported");
+    return -1;
+}
+
 int parse_primary(char* str, int* header_point, size_t len, robj* tableObj1, robj* tableObj2, int idx1, int idx2){
     char curr_val = str[*header_point];
     char* str1 = NULL;
     char* str2 = NULL;
     int length1 = 0;
     int length2 = 0;
-    char op, op_type;
+    char op_type;
     int ret_val;
 
     *header_point = *header_point + 1;
@@ -94,11 +124,10 @@ int parse_primary(char* str, int* header_point, size_t len, robj* tableObj1, rob
         return 1;
     }
     // obtain the operator
-    op = str[*header_point];
-    *header_point = *header_point + 1;
+    op = parse_conditional_op(str, header_point);
 
     // obtain the first operend and its type
-    while(*((char*)header_point) != '#' && *((char*)header_point) != '\"' && *((char*)header_point) != '\r'){
+    while(*((char*)header_point) != '#' && *((char*)header_point) != '\"'){
         length1++;
         *header_point = *header_point + 1;
     }
