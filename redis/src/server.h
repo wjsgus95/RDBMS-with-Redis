@@ -2125,12 +2125,33 @@ void xinfoCommand(client *c);
 void xdelCommand(client *c);
 void xtrimCommand(client *c);
 void lolwutCommand(client *c);
+
+/* rdbms.c commands prototype */
 void relselectCommand(client *c);
 void relupdateCommand(client *c);
 void reldeleteCommand(client *c);
 void relcreateCommand(client *c);
 void relinsertCommand(client *c);
 void relshowCommand(client *c);
+
+/* rdbms_utils.c prototypes */
+char* conditional_operators[] = {
+    "=", ">", "<", "!=", "<=", ">=", "*"
+};
+int get_col_index(robj* table, char* colname);
+int get_index(char* str, char);
+int parse_terminal_size(char* str, int offset);
+int equal_to(char* val1, char* val2);
+int greater_than(char* val1, char* val2, char* type);
+int like(char* regexp, char* text);
+int like_star(char c, char* regexp, char* text);
+int get_col_idx(char* col_query, char** col, int n_cols);
+char* get_row_val(char* col_query, robj* tableObj, int row_idx);
+int run_unit_cond_op(int op, char* param1, char* param2, char op_type, robj* tableObj1, robj* tableObj2, int idx1, int idx2);
+int parse_conditional_op(char* str, int* header_point);
+int parse_primary(char* str, int* header_point, size_t len, robj* tableObj1, robj* tableObj2, int idx1, int idx2);
+int parse_where_recursive(char* str, int* header_point, size_t len, robj* tableObj1, robj* tableObj2, int idx1, int idx2);
+int parse_where(char* str, size_t len, robj* tableObj1, robj* tableObj2, int idx1, int idx2);
 
 #if defined(__GNUC__)
 void *calloc(size_t count, size_t size) __attribute__ ((deprecated));
