@@ -2135,9 +2135,11 @@ void relinsertCommand(client *c);
 void relshowCommand(client *c);
 
 /* rdbms_utils.c prototypes */
+/*
 char* conditional_operators[] = {
     "=", ">", "<", "!=", "<=", ">=", "*"
 };
+*/
 int get_col_index(robj* table, char* colname);
 int get_index(char* str, char);
 int parse_terminal_size(char* str, int offset);

@@ -24,7 +24,7 @@ redis_dir = 'redis'
 cluster_dir = f'{redis_dir}/utils/create-cluster'
 
 cluster_spec = [{"host":local, "port":"6379"}, {"host":local, "port":"6380"},
-                    {"host":local, "port":"6381"}, {"host":local, "port":"6381"}]
+                    {"host":local, "port":"6381"}]
 
 subprocess.run([f"./{cluster_dir}/create-cluster", "stop"])
 redis_server = subprocess.run([f"./{cluster_dir}/create-cluster", "start"])

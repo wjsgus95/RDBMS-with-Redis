@@ -15,7 +15,7 @@ redis_server = subprocess.run([f"./{cluster_dir}/create-cluster", "create"])
 
 r = redis.StrictRedisCluster(startup_nodes=cluster_spec)
 
-N = 50000
+N = 10000
 print(f'N = {N}\n')
 
 def benchmark_callback(plan):
@@ -62,6 +62,7 @@ def our_approach():
     r.execute_command('relcreate', 'student', 'id', 'name', 'int', 'varchar')
     for i in range(N):
         r.execute_command('relinsert', 'student', '\r1232121', '\rjason')
+    #print(r.execute_command('relselect', 'id\rname', 'student'))
 
 # put locally defined functions in a list
 benchmarks = [function[0] for function in locals().items() if 'function' in str(function[1]) and 'at' in str(function[1])]

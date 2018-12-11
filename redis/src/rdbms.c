@@ -64,6 +64,7 @@ void relinsertCommand(client* c) {
 
     // important to use calloc because empty values should hold NULL pointers
     if(need_expand(tableObj)) {
+        fprintf(stderr, "table length: %d\n", tableObj->length);
         tableObj->max_length <<= 1;
         char*** migrate_table = calloc(tableObj->max_length, sizeof(sds***));
         //sds** migrate_column = calloc(tableObj->column_length, sizeof(sds**));
@@ -232,7 +233,7 @@ void relselectCommand(client* c) {
     // temp
     //addReplyMultiBulkLen(c, table_column_argc);
 
-    addReplyLongLong(c, table_column_argc); numret++;
+    addReplyLongLong(c, tableObj->length); numret++;
     for(int i = 0; i < table_column_argc; i++) {
         for(int j = 0; j < tableObj->length; j++) {
             for(int k = 0; k < tableObj->column_length; k++) {
