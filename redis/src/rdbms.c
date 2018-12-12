@@ -125,6 +125,8 @@ void relinsertCommand(client* c) {
         if(tableObj->table[tableObj->length][i] != NULL) {
             addReplyBulkCBuffer(c, tableObj->table[tableObj->length][i], strlen(tableObj->table[tableObj->length][i]));
         } else {
+            tableObj->table[tableObj->length][i] = calloc(1, sizeof("null"));
+            memcpy(tableObj->table[tableObj->length][i], "null", sizeof("null"));
             addReplyBulkCBuffer(c, "null", sizeof("null")-1);
         }
         numret++;
@@ -184,7 +186,7 @@ void reldeleteCommand(client* c) {
 
 
 void relselectCommand(client* c) {
-    robj* tableObj = lookupKeyRead(c->db, c->argv[2]);
+    robj* tableObj = lookupKeyRead(c->db, c->argv[1]);
     void *replylen = addDeferredMultiBulkLength(c);
 
     char* table_column_argv[100];
@@ -194,7 +196,7 @@ void relselectCommand(client* c) {
 
     // "table.column"s argument
     //char* iter = (char *)(c->argv[1]);
-    robj* value = c->argv[1];
+    robj* value = c->argv[2];
     value = getDecodedObject(value);
     char* iter = (char *)(value->ptr);
     char* past_iter = iter;

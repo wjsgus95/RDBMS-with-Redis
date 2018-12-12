@@ -10,3 +10,4 @@ for i in range(N):
     r.execute_command('relinsert', 'student', '\r1232121', '\rjason')
 
 result = r.execute_command('relselect', 'id\rname', 'student')
+print(result)
