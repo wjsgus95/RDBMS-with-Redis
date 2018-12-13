@@ -218,6 +218,8 @@ void relselectCommand(client* c) {
         } else if(*iter == 's' && *(iter+1) == ':') {
             table_is_sum[table_column_argc] = 1;
             past_iter = iter += 2;
+        } else if(*iter == ':') {
+            past_iter = iter += 1;
         }
         if(*iter == '\r') {
             table_column_argv[table_column_argc] = (char*)calloc(current_size, sizeof(char));
@@ -239,15 +241,6 @@ void relselectCommand(client* c) {
     memcpy(table_column_argv[table_column_argc], past_iter, current_size);
     table_column_size[table_column_argc++] = current_size;
 
-    // where clause
-    // implement = < like
-    if(c->argc > 3) {
-        char* where_clause = c->argv[3]->ptr;
-        size_t len = strlen(c->argv[3]->ptr);
-        int retval = parse_where(where_clause, len, tableObj, NULL, 0, 0);
-        //fprintf(stderr, "where return = %d\n", retval);
-    }
-
     if(is_select_all) {
         addReplyLongLong(c, tableObj->column_length); numret++;
         for(int i = 0; i < tableObj->column_length; i++) {
@@ -260,11 +253,12 @@ void relselectCommand(client* c) {
         addReplyLongLong(c, table_column_argc); numret++;
         for(int i = 0; i < table_column_argc; i++) {
             for(int j = 0; j < tableObj->length; j++) {
-                fprintf(stderr, "j = %d, c->argc = %d\n", c->argc);
-                fprintf(stderr, "idx = %d, parse_where = %d\n", j, parse_where(c->argv[3]->ptr, strlen(c->argv[3]->ptr), tableObj, NULL, j, 0));
+                fprintf(stderr, "j = %d, c->argc = %d\n", j, c->argc);
+                fprintf(stderr, "parse_where = %d\n", parse_where(c->argv[3]->ptr, strlen(c->argv[3]->ptr), tableObj, NULL, j, 0));
                 if((c->argc > 3 && parse_where(c->argv[3]->ptr, strlen(c->argv[3]->ptr), tableObj, NULL, j, 0)) ||
                         c->argc <= 3) {
                     for(int k = 0; k < tableObj->column_length; k++) {
+                        fprintf(stderr, "tableObj->column[%d] = %s, table_column_argv[%d] = %s", k, tableObj->column[k], i, table_column_argv[i]);
                         if(strcmp(tableObj->column[k], table_column_argv[i]) == 0) {
                             addReplyBulkCBuffer(c, tableObj->table[j][k], strlen(tableObj->table[j][k]));
                             numret++;

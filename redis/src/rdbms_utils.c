@@ -115,7 +115,7 @@ int get_col_idx(char* col_query, char** col, int n_cols){
     char* curr_col;
     for(i=0; i<n_cols; ++i){
         curr_col = col[i];
-        if (strcmp(col, col_query) == 0){
+        if (strcmp(curr_col, col_query) == 0){
             return i;
         }
     }
@@ -131,14 +131,15 @@ char* get_row_val(char* col_query, robj* tableObj, int row_idx){
         //fprintf(stderr, "wrong column name %s\n", col_query);
         return 0;
     }
-    char** row = (char***) tableObj + row_idx;
-    return row[col_idx];
+    //char** row = (char***) tableObj->table + row_idx;
+    //return row[col_idx];
+    return tableObj->table[row_idx][col_idx];
 }
 
 
 int run_unit_cond_op(int op, char* param1, char* param2, char op_type, robj* tableObj1, robj* tableObj2, int idx1, int idx2){
     // to be implemented: cartesian product
-    char* val1, val2, col_type;
+    char *val1, *val2, *col_type;
     val1 = get_row_val(param1, tableObj1, idx1);
     if (op_type == '#'){
         val2 = get_row_val(param2, tableObj1, idx1);
@@ -216,20 +217,22 @@ int parse_primary(char* str, int* header_point, size_t len, robj* tableObj1, rob
     op = parse_conditional_op(str, header_point);
 
     // obtain the first operend and its type
-    while(*((char*)header_point) != '#' && *((char*)header_point) != '\"'){
+    while(str[*header_point] != '#' && str[*header_point] != '\"'){
         length1++;
         *header_point = *header_point + 1;
     }
     str1 = (char*) calloc(1, length1 + 1);
+    memcpy(str1, (str+*(header_point))-length1, length1);
     op_type = str[*header_point];
     *header_point = *header_point + 1;
 
     // obtain the second operend
-    while(*((char*)header_point) != '\r' && *((char*)header_point) != '\0'){
+    while(str[*header_point] != '\r' && str[*header_point] != '\0'){
         length2++;
         *header_point = *header_point + 1;
     }
     str2 = (char*) calloc(1, length2 + 1);
+    memcpy(str2, (str+*(header_point))-length2, length2);
     *header_point = *header_point + 1;
 
     // run operation

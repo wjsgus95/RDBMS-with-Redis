@@ -13,4 +13,4 @@ insert into student values(32325311, "teacher1" );
 insert into student values(32329311, "teacher1" );
 
 select * from student;
-select id from student where id > 2012;
+select id from student where id = 20123123;
