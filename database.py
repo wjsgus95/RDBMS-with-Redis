@@ -1,4 +1,4 @@
-from parse import Parser
+from parse import *
 
 # legal operations
 ops = ['show', 'create', 'insert', 'select', 'delete', 'update']
@@ -7,7 +7,6 @@ types = ['int', 'varchar']
 
 class DataBase():
     def __init__(self, redis):
-        self.parser = Parser()
         self.redis = redis
 
     # called upon new query from stdin
@@ -31,7 +30,7 @@ class DataBase():
     )
     '''
     def create(self):
-        qeury = parse_create(self.statement)
+        query = parse_create(self.statement)
 
         #if self.redis.sismember('table', query['table']):
         #    # error message (tentative)
@@ -43,7 +42,7 @@ class DataBase():
 
         #self.show()
         #return
-        self.redis.execute_command('relcreate', f'query["table"]', *query['col_name'], *query['col_type'])
+        self.redis.execute_command('relcreate', query["table"], *query['col_name'], *query['col_type'])
         self.show()
         return
 
@@ -55,10 +54,8 @@ class DataBase():
     )
     '''
     def insert(self):
-        query = parse_insert(statement)
-
-        
-            
+        query = parse_insert(self.statement)
+        self.redis.execute_command('relinsert', query["table"], *query['col_val'])
         return
 
 
@@ -71,7 +68,8 @@ class DataBase():
     '''
     def select(self):
         query = parse_select(self.statement)
-        
+        result = self.redis.execute_command('relselect', query["from"], query['select'], query['where'])
+        print(result)
         return
 
     def delete(self):
@@ -85,7 +83,8 @@ class DataBase():
         return
 
     def run_query(self):
-        if self.statement.split()[0].lower() not in ops:
+        if len(self.statement.split()) == 0: return
+        elif self.statement.split()[0].lower() not in ops:
             # error message (tentative)
             print("Unrecognized operation")
             return

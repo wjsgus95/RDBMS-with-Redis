@@ -1,3 +1,3 @@
-#define REDIS_GIT_SHA1 "fdeeb6f5"
-#define REDIS_GIT_DIRTY "77"
-#define REDIS_BUILD_ID "matisse-1544692306"
+#define REDIS_GIT_SHA1 "1d18d44d"
+#define REDIS_GIT_DIRTY "234"
+#define REDIS_BUILD_ID "jun-900X3T-900X3U-1544698313"

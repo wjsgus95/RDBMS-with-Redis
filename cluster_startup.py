@@ -37,7 +37,7 @@ print(r.execute_command('relcreate', 'student', 'id', 'name', 'int', 'varchar'))
 print(r.execute_command('relinsert', 'student', 'id\r1232121', 'name\rjason'))
 print(r.execute_command('relinsert', 'student', '\r1232121', '\rjason'))
 print(r.execute_command('relinsert', 'student', 'id\r1232121'))
-print(r.execute_command('relselect', 'student', 'name'))
+print(r.execute_command('relselect', 'student', ':name'))
 
 
 subprocess.run([f"./{cluster_dir}/create-cluster", "stop"])

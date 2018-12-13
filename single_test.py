@@ -10,6 +10,6 @@ for i in range(N):
     r.execute_command('relinsert', 'student', '\r1232121', '\rjason')
 r.execute_command('relinsert', 'student', '\r1234567', '\rfound')
 
-#result = r.execute_command('relselect', 'id\rname', 'student')
-result = r.execute_command('relselect', 'student', '*', '=id"1234567')
+result = r.execute_command('relselect', 'student', 'id\rname')
+#result = r.execute_command('relselect', 'student', ':*', '=id"1234567')
 print(result)

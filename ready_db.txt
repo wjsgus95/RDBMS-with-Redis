@@ -1,3 +1,4 @@
+yes
 create table student (id int, name varchar);
 create table teacher (id int, dept varchar);
 
@@ -10,3 +11,5 @@ insert into student values(32832223, "teacher1" );
 insert into student values(32322311, "teacher1" );
 insert into student values(32325311, "teacher1" );
 insert into student values(32329311, "teacher1" );
+
+select * from student;

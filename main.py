@@ -38,6 +38,7 @@ print('"Welcome DB with NoSQL"')
 while True:
     statement = input("Program Query Input > ")
 
+    print(statement)
     db.update_query(statement)
     db.run_query()
 

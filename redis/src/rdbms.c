@@ -191,6 +191,12 @@ void relselectCommand(client* c) {
 
     char* table_column_argv[100];
     int table_column_size[100];
+
+    int table_is_sum[100];
+    int table_is_count[100];
+    memset(table_is_sum, 0, sizeof(int) * 100);
+    memset(table_is_count, 0, sizeof(int) * 100);
+
     int table_column_argc = 0;
     size_t current_size = 0, numret = 0;
 
@@ -202,11 +208,17 @@ void relselectCommand(client* c) {
     char* past_iter = iter;
 
     int is_select_all = 0;
-    if(*iter == '*')
+    if(*iter == ':' && *(iter+1) == '*')
         is_select_all = 1;
 
-
     while (*iter != '\0') {
+        if(*iter == 'c' && *(iter+1) == ':') {
+            table_is_count[table_column_argc] = 1;
+            past_iter = iter += 2;
+        } else if(*iter == 's' && *(iter+1) == ':') {
+            table_is_sum[table_column_argc] = 1;
+            past_iter = iter += 2;
+        }
         if(*iter == '\r') {
             table_column_argv[table_column_argc] = (char*)calloc(current_size, sizeof(char));
             // Note: Non-NULL terminated
@@ -229,22 +241,12 @@ void relselectCommand(client* c) {
 
     // where clause
     // implement = < like
-    if(c->argc > 2) {
+    if(c->argc > 3) {
         char* where_clause = c->argv[3]->ptr;
         size_t len = strlen(c->argv[3]->ptr);
         int retval = parse_where(where_clause, len, tableObj, NULL, 0, 0);
         fprintf(stderr, "where return = %d\n", retval);
     }
-
-
-    //if ((o = lookupKeyReadOrReply(c,c->argv[1],shared.emptymultibulk)) == NULL) return;
-    //addReplyMultiBulkLen(c, 2);
-    //addReplyBulkCBuffer(c, "woeifj", sizeof("woeifj")-1);
-    //addReplyBulkCBuffer(c, "woeifj", sizeof("woeifj")-1);
-    //addReplyBulkCBuffer(c, "woeifj", sizeof("woeifj"));
-
-    // temp
-    //addReplyMultiBulkLen(c, table_column_argc);
 
     if(is_select_all) {
         addReplyLongLong(c, tableObj->column_length); numret++;

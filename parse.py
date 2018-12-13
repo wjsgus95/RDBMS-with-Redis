@@ -15,8 +15,8 @@ def remove_outer_brackets(statement):
         return statement
 
 def split_brackets(statement):
-    statement = statement.replace('(', '( ')
-    statement = statement.replace(')', ' )')
+    statement = statement.replace('(', ' ( ')
+    statement = statement.replace(')', ' ) ')
     return statement
 
 def split_commas(statement):
@@ -211,6 +211,9 @@ class SelectParser:
         statement = remove_extra_blanks(statement)
         self.statement = statement
         self.splitted = statement.split(' ')
+
+        self.s_start, self.s_end, self.f_start, self.f_end = 0,0,0,None
+
         for i, t in enumerate(self.splitted):
             if t.lower() == 'select':
                 self.s_start = i+1
@@ -254,7 +257,7 @@ class SelectParser:
             w = self.whereParser.encode()
             return {'select': s, 'from': f, 'where': w}
         except:
-            return {'select': s, 'from': f}
+            return {'select': s, 'from': f, 'where': None}
 
 class WhereParser:
     def __init__(self, statement):
@@ -375,8 +378,8 @@ def parse_update(statement):
     parser = UpdateParser(statement)
     return parser.get_values()
 
-'''
 if __name__ == "__main__":
+    '''
     create_query = 'CREATE table HA_HA_HO_HO (\n    haha   VARCHAR  ,\n  he_he  INT,hohoho   varchar\n)'
     insert_query1 = 'Insert INTO hello__haha \n VALUES \n (\"hey  hey\", 10, 25, \' hallo\')'
     insert_query2 = 'insert into KAkaKA \n (ha, he, hu, he) \n values \t (\"hey  hey\", 10, 25, \' hallo\')'
@@ -399,6 +402,10 @@ if __name__ == "__main__":
     print(parse_insert(insert_query1))
     print(parse_insert(insert_query2))
     print(parse_delete(delete_query))
+    '''
 
-'''
+    insert_query = 'insert into student values(20123123, "student1" );'
+    select_query = 'select * from student;'
+    print(parse_insert(insert_query))
+    print(parse_select(select_query))
 
