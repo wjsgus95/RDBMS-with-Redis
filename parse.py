@@ -349,6 +349,27 @@ class WhereParser:
     def encode(self):
         return self.inorder_tuple_traversal(self.parse()).replace('\'', '').replace('\"', '').replace('$', '\"').encode('ascii')
 
+def parse_create(statement):
+    parser = CreateParser(statement)
+    return parser.get_values()
+
+def parse_insert(statement):
+    parser = InsertParser(statement)
+    return parser.get_values()
+
+def parse_select(statement):
+    parser = SelectParser(statement)
+    return parser.get_values()
+
+def parse_delete(statement):
+    parser = DeleteParser(statement)
+    return parser.get_values()
+
+def parse_update(statement):
+    parser = UpdateParser(statement)
+    return parser.get_values()
+
+'''
 if __name__ == "__main__":
     create_query = 'CREATE table HA_HA_HO_HO (\n    haha   VARCHAR  ,\n  he_he  INT,hohoho   varchar\n)'
     insert_query1 = 'Insert INTO hello__haha \n VALUES \n (\"hey  hey\", 10, 25, \' hallo\')'
@@ -368,5 +389,10 @@ if __name__ == "__main__":
     delete_parsed = delete_parser.get_values()
     update_parsed = update_parser.get_values()
     select_parsed = select_parser.get_values()
-    import ipdb; ipdb.set_trace()
+    print(parse_create(create_query))
+    print(parse_insert(insert_query1))
+    print(parse_insert(insert_query2))
+    print(parse_delete(delete_query))
+
+'''
 
