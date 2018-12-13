@@ -200,6 +200,12 @@ void relselectCommand(client* c) {
     value = getDecodedObject(value);
     char* iter = (char *)(value->ptr);
     char* past_iter = iter;
+
+    int is_select_all = 0;
+    if(*iter == '*')
+        is_select_all = 1;
+
+
     while (*iter != '\0') {
         if(*iter == '\r') {
             table_column_argv[table_column_argc] = (char*)calloc(current_size, sizeof(char));
@@ -214,15 +220,20 @@ void relselectCommand(client* c) {
         iter++;
         current_size++;
     }
+
     table_column_argv[table_column_argc] = (char*)calloc(current_size, sizeof(char));
+
     // Note: Non-NULL terminated
     memcpy(table_column_argv[table_column_argc], past_iter, current_size);
     table_column_size[table_column_argc++] = current_size;
 
     // where clause
     // implement = < like
-    if(c->argc > 1) {
-        c->argv[2];
+    if(c->argc > 2) {
+        char* where_clause = c->argv[3]->ptr;
+        size_t len = strlen(c->argv[3]->ptr);
+        int retval = parse_where(where_clause, len, tableObj, NULL, 0, 0);
+        fprintf(stderr, "where return = %d\n", retval);
     }
 
 
@@ -235,23 +246,34 @@ void relselectCommand(client* c) {
     // temp
     //addReplyMultiBulkLen(c, table_column_argc);
 
-    addReplyLongLong(c, tableObj->length); numret++;
-    for(int i = 0; i < table_column_argc; i++) {
-        for(int j = 0; j < tableObj->length; j++) {
-            for(int k = 0; k < tableObj->column_length; k++) {
-                if(strcmp(tableObj->column[k], table_column_argv[i]) == 0) {
-                    addReplyBulkCBuffer(c, tableObj->table[j][k], strlen(tableObj->table[j][k]));
+    if(is_select_all) {
+        addReplyLongLong(c, tableObj->column_length); numret++;
+        for(int i = 0; i < tableObj->column_length; i++) {
+            for(int j = 0; j < tableObj->length; j++) {
+                    addReplyBulkCBuffer(c, tableObj->table[j][i], strlen(tableObj->table[j][i]));
                     numret++;
+            }
+        }
+    } else {
+        addReplyLongLong(c, table_column_argc); numret++;
+        for(int i = 0; i < table_column_argc; i++) {
+            for(int j = 0; j < tableObj->length; j++) {
+                for(int k = 0; k < tableObj->column_length; k++) {
+                    if(strcmp(tableObj->column[k], table_column_argv[i]) == 0) {
+                        addReplyBulkCBuffer(c, tableObj->table[j][k], strlen(tableObj->table[j][k]));
+                        numret++;
+                    }
                 }
             }
         }
     }
 
-    decrRefCount(value);
     for(int i = 0; i < table_column_argc; i++) {
         free(table_column_argv[i]);
     }
 
+    decrRefCount(value);
     setDeferredMultiBulkLength(c,replylen,numret);
     return;
 }
+
