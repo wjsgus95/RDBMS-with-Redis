@@ -225,7 +225,7 @@ int parse_primary(char* str, int* header_point, size_t len, robj* tableObj1, rob
     *header_point = *header_point + 1;
 
     // obtain the second operend
-    while(*((char*)header_point) != '\r' || *((char*)header_point) != '\0'){
+    while(*((char*)header_point) != '\r' && *((char*)header_point) != '\0'){
         length2++;
         *header_point = *header_point + 1;
     }

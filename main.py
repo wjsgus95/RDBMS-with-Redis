@@ -36,7 +36,10 @@ db = DataBase(r)
 print('"Welcome DB with NoSQL"')
 
 while True:
-    statement = input("Program Query Input > ")
+    try:
+        statement = input("Program Query Input > ")
+    except EOFError:
+        sig_handler(None,None)
 
     print(statement)
     db.update_query(statement)
