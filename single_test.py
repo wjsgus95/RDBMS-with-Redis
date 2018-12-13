@@ -2,7 +2,7 @@
 import redis
 r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
-N = 10000
+N = 10
 
 r.execute_command('relcreate', 'student', 'id', 'name', 'int', 'varchar')
 

@@ -184,7 +184,7 @@ int parse_conditional_op(char* str, int* header_point){
     int cond_op_idx;
 
     // extract the operator
-    if (str[*(header_point+1)] == '='){
+    if (str[*(header_point)+1] == '='){
         op_length++;
     }
     *header_point = *header_point + op_length;

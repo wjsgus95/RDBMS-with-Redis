@@ -405,7 +405,7 @@ if __name__ == "__main__":
     '''
 
     insert_query = 'insert into student values(20123123, "student1" );'
-    select_query = 'select * from student;'
+    select_query = 'select * from student where id > 2012;'
     print(parse_insert(insert_query))
     print(parse_select(select_query))
 
