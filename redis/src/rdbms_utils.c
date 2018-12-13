@@ -17,24 +17,6 @@ int get_col_index(robj* table, char* colname){
 
 }
 
-int get_index(char* str, char){
-    char* ptr;
-    int index;
-
-    ptr = strchr(str, c);
-    if (ptr == NULL)
-    {
-        //printf("Character not found\n");
-        return -1;
-    }
-
-    index = ptr - str;
-
-    return index;
-
-}
-
-
 int parse_terminal_size(char* str, int offset){
     char* iter = str + offset;
     size_t length = 0;
@@ -228,7 +210,7 @@ int parse_primary(char* str, int* header_point, size_t len, robj* tableObj1, rob
     int length1 = 0;
     int length2 = 0;
     char op_type;
-    int ret_val;
+    int ret_val, op;
 
     // obtain the operator
     op = parse_conditional_op(str, header_point);
@@ -262,6 +244,7 @@ int parse_primary(char* str, int* header_point, size_t len, robj* tableObj1, rob
 int parse_where_recursive(char* str, int* header_point, size_t len, robj* tableObj1, robj* tableObj2, int idx1, int idx2){
     char op = str[*header_point];
     int val1, val2;
+    char next_op;
 
     *header_point = *header_point + 1;
     if (op == '\0'){
@@ -319,5 +302,5 @@ int parse_where(char* str, size_t len, robj* tableObj1, robj* tableObj2, int idx
     int* header_point = (int *) calloc(1, sizeof(int)); // pseudo global
     int ret_val = parse_where_recursive(str, header_point, len, tableObj1, tableObj2, idx1, idx2);
     free(header_point);
-    return ret_val
+    return ret_val;
 }

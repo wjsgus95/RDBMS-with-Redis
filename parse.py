@@ -244,7 +244,11 @@ class SelectParser:
 
     def get_values(self):
         s = ' '.join(self.splitted[self.s_start:self.s_end]).replace(' ', '').replace(',', '\r')
-        s = self.parse_select(s).encode('ascii')
+        s = self.parse_select(s)
+        # deal with select *
+        if '*' in s:
+            s = ':*'
+        s = s.encode('ascii')
         f = ' '.join(self.splitted[self.f_start:self.f_end]).replace(' ', '').replace(',', '\r').encode('ascii')
         try:
             w = self.whereParser.encode()
@@ -347,7 +351,9 @@ class WhereParser:
         return parsed
 
     def encode(self):
-        return self.inorder_tuple_traversal(self.parse()).replace('\'', '').replace('\"', '').replace('$', '\"').encode('ascii')
+        encoded =  self.inorder_tuple_traversal(self.parse()).replace('\'', '').replace('\"', '').replace('$', '\"')
+
+        return encoded.encode('ascii')
 
 def parse_create(statement):
     parser = CreateParser(statement)
