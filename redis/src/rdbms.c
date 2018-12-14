@@ -1,34 +1,11 @@
 #include "server.h"
-//#include <stdio.h>
 
 #define need_expand(x) ((((x)->length >= (x)->max_length)))
 
 #define and(x) (x == '&');
 #define or(x) (x == '|');
 
-typedef struct rTable {
-    sds*** table;
-    sds** column;
-    sds** type;
-    size_t length;
-    size_t max_length;
-    size_t column_length;
-} rTable;
-
-char *operatorTable[] = {
-    "=",
-    "<=",
-    ">=",
-    "!=",
-    "like",
-    "<",
-    ">"
-};
-
-// = <= >= != like < >
-// not done
-
-// not using this for now, incompatible with redis-cluster-py
+// not using this for now, incompatible with redis-cluster-py, use KEYS command instead
 void relshowCommand(client* c) {
     dictIterator *di;
     dictEntry *de;
@@ -55,23 +32,19 @@ void relshowCommand(client* c) {
     setDeferredMultiBulkLength(c,replylen,numkeys);
 }
 
-// explicit column specification needs to be handled
 void relinsertCommand(client* c) {
     // presumably call by reference
     robj* tableObj = lookupKeyRead(c->db, c->argv[1]);
     void *replylen = addDeferredMultiBulkLength(c);
     unsigned long numret = 0;
 
-    // important to use calloc because empty values should hold NULL pointers
+    // Note to use calloc because empty values should hold NULL pointers
     if(need_expand(tableObj)) {
-        //fprintf(stderr, "table length: %d\n", tableObj->length);
         tableObj->max_length <<= 1;
         char*** migrate_table = calloc(tableObj->max_length, sizeof(sds***));
-        //sds** migrate_column = calloc(tableObj->column_length, sizeof(sds**));
 
         if(tableObj->table != NULL) {
             memcpy(migrate_table, tableObj->table, sizeof(sds**)*tableObj->length);
-            //memcpy(migrate_column, tableObj->column, sizeof(sds*)*tableObj->column_length);
             void* temp = tableObj->table;
             tableObj->table = migrate_table;
             free(temp);
@@ -80,18 +53,10 @@ void relinsertCommand(client* c) {
         }
     }
 
-    //fprintf(stderr, "columns\n");
-    //fprintf(stderr, "%s %s\n", tableObj->column[0], tableObj->column[1]);
-    //fprintf(stderr, "%d %d\n", tableObj->length, tableObj->column_length);
-    //fprintf(stderr, "%d\n", need_expand(tableObj));
-
     tableObj->table[tableObj->length] = calloc(1, tableObj->column_length);
 
     // Note: argc not necessarily all values to be inserted (could be "column name\rcolumn value")
-    //fprintf(stderr, "c->argv[2]->ptr = %c\n", ((char*)c->argv[2]->ptr)[0]);
-    //fprintf(stderr, "c->argv[2]->ptr = %s\n", c->argv[2]->ptr);
     if((((char*)c->argv[2]->ptr)[0]) == '\r') {
-        //fprintf(stderr, "column unspecified\n");
         for(int i = 2; i < c->argc; i++) {
             const size_t iter = 1;
             tableObj->table[tableObj->length][i-2] = calloc(1, sdslen(c->argv[i]->ptr)-iter);
@@ -102,25 +67,19 @@ void relinsertCommand(client* c) {
             for(int j = 0; j < tableObj->column_length; j++) {
                 size_t iter = 0;
                 while((((char*)c->argv[i]->ptr)+iter)[0] != '\r') {
-                    //fprintf(stderr, "first in while %c\n", (((char*)c->argv[i]->ptr)+iter)[0]);
                     if((((char*)c->argv[i]->ptr)+iter)[0] != (((char*)tableObj->column[j])+iter)[0]) {
-                        //fprintf(stderr, "in if in while %c %c\n", (((char*)c->argv[i]->ptr)+iter)[0], *(((char*)tableObj->column[j])+iter));
                         break;
                     }
                     iter++;
                 }
                 if((((char *)c->argv[i]->ptr)+iter)[0] != '\r') continue;
                 iter++;
-                //fprintf(stderr, "in if in while %c %c\n", (((char*)c->argv[i]->ptr)+iter)[0], *(((char*)tableObj->column[j])+iter));
-                //fprintf(stderr, "column match: %s\n", tableObj->column[j]);
                 tableObj->table[tableObj->length][j] = calloc(1, sdslen(c->argv[i]->ptr)-iter);
                 memcpy(tableObj->table[tableObj->length][j], (((char*)c->argv[i]->ptr)+iter), sdslen(c->argv[i]->ptr)-iter);
             }
         }
     }
 
-    //addReplyMultiBulkLen(c, tableObj->column_length);
-    //queueCommand(c);
     for(int i = 0; i < tableObj->column_length; i++) {
         if(tableObj->table[tableObj->length][i] != NULL) {
             addReplyBulkCBuffer(c, tableObj->table[tableObj->length][i], strlen(tableObj->table[tableObj->length][i]));
@@ -132,7 +91,6 @@ void relinsertCommand(client* c) {
         numret++;
     }
     
-    //addReplyBulkCBuffer(c, "not found", sizeof("not found")-1); numret++;
     setDeferredMultiBulkLength(c,replylen,numret);
     tableObj->length++;
 }
@@ -151,14 +109,8 @@ void relcreateCommand(client* c) {
 
     for(int i = 2; i <= (c->argc)/2; i++) {
         robj *arg_column = c->argv[i];
-        //arg_column = getDecodedObject(arg_column);
-        //tableObj->column[i-2] = calloc(1, size*sizeof(sds));
-        // directly assigned but object created in getDecodedObject
         incrRefCount(arg_column);
         tableObj->column[i-2] = arg_column->ptr;
-        //size_t size = sdslen(arg_column);
-        //memcpy(ctableObj->column[i-2], arg_column, size);
-        //decrRefCount(arg_column);
     }
     for(int i = (c->argc)/2+1; i < c->argc; i++) {
         robj *arg_col_type = c->argv[i];
@@ -167,12 +119,10 @@ void relcreateCommand(client* c) {
     }
 
     tableObj->table = calloc(tableObj->column_length, sizeof(char**)*tableObj->max_length);
-    //c->argv[1] copied in dictAddRaw, decrease reference to arg_table (if ref == 0 then freed)
+    // c->argv[1] copied in dictAddRaw, decrease reference to arg_table (if ref == 0 then freed)
     setKey(c->db, c->argv[1], tableObj);
-    //decrRefCount(arg_table);
 
     addReplyMultiBulkLen(c, 1);
-    //queueCommand(c);
     addReplyBulkCBuffer(c, "OK", sizeof("OK")-1);
 }
 
@@ -241,27 +191,41 @@ void relselectCommand(client* c) {
     memcpy(table_column_argv[table_column_argc], past_iter, current_size);
     table_column_size[table_column_argc++] = current_size;
 
+    // if select *
     if(is_select_all) {
         addReplyLongLong(c, tableObj->column_length); numret++;
         for(int i = 0; i < tableObj->column_length; i++) {
             for(int j = 0; j < tableObj->length; j++) {
-                    addReplyBulkCBuffer(c, tableObj->table[j][i], strlen(tableObj->table[j][i]));
-                    numret++;
-            }
-        }
-    } else {
-        addReplyLongLong(c, table_column_argc); numret++;
-        for(int i = 0; i < table_column_argc; i++) {
-            for(int j = 0; j < tableObj->length; j++) {
-                fprintf(stderr, "j = %d, c->argc = %d\n", j, c->argc);
-                fprintf(stderr, "parse_where = %d\n", parse_where(c->argv[3]->ptr, strlen(c->argv[3]->ptr), tableObj, NULL, j, 0));
                 if((c->argc > 3 && parse_where(c->argv[3]->ptr, strlen(c->argv[3]->ptr), tableObj, NULL, j, 0)) ||
                         c->argc <= 3) {
-                    for(int k = 0; k < tableObj->column_length; k++) {
-                        fprintf(stderr, "tableObj->column[%d] = %s, table_column_argv[%d] = %s", k, tableObj->column[k], i, table_column_argv[i]);
-                        if(strcmp(tableObj->column[k], table_column_argv[i]) == 0) {
-                            addReplyBulkCBuffer(c, tableObj->table[j][k], strlen(tableObj->table[j][k]));
-                            numret++;
+                    addReplyBulkCBuffer(c, tableObj->table[j][i], strlen(tableObj->table[j][i]));
+                    numret++;
+                }
+            }
+        }
+    } 
+    // if select columns
+    else {
+        addReplyLongLong(c, table_column_argc); numret++;
+        for(int i = 0; i < table_column_argc; i++) {
+            // case sum(column)
+            if(table_is_sum[i]) {
+
+            } 
+            // case count(column)
+            else if(table_is_count[i]) {
+
+            } 
+            // case column
+            else {
+                for(int j = 0; j < tableObj->length; j++) {
+                    if((c->argc > 3 && parse_where(c->argv[3]->ptr, strlen(c->argv[3]->ptr), tableObj, NULL, j, 0)) ||
+                            c->argc <= 3) {
+                        for(int k = 0; k < tableObj->column_length; k++) {
+                            if(strcmp(tableObj->column[k], table_column_argv[i]) == 0) {
+                                addReplyBulkCBuffer(c, tableObj->table[j][k], strlen(tableObj->table[j][k]));
+                                numret++;
+                            }
                         }
                     }
                 }

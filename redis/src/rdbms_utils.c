@@ -191,7 +191,8 @@ int parse_conditional_op(char* str, int* header_point){
     *header_point = *header_point + op_length;
     op = (char*) calloc(1, op_length * sizeof(char));
     for (i=0; i<op_length; ++i){
-        op[i] = str[i];
+        //op[i] = str[i];
+        op[i] = str[*(header_point)-op_length+i];
     }
 
     // find where the operator exists
@@ -261,7 +262,7 @@ int parse_where_recursive(char* str, int* header_point, size_t len, robj* tableO
     // run first evaluation
     // check next op
     next_op = str[*header_point];
-    if (next_op == "&" || next_op == '|'){
+    if (next_op == '&' || next_op == '|'){
         val1 = parse_where_recursive(str, header_point, len, tableObj1, tableObj2, idx1, idx2);
     }
     else if (next_op == '<' || next_op == '>' || next_op == '=' || next_op == '*' || next_op == '!'){
@@ -269,13 +270,14 @@ int parse_where_recursive(char* str, int* header_point, size_t len, robj* tableO
     }
     else{
         fprintf(stderr, "wrong type token in %s\n", str);
+        fprintf(stderr, "hedear pointing at %d\n", *header_point);
         return -1;
     }
 
     // run second evaluation
     // check next op
     next_op = str[*header_point];
-    if (next_op == "&" || next_op == '|'){
+    if (next_op == '&' || next_op == '|'){
         val2 = parse_where_recursive(str, header_point, len, tableObj1, tableObj2, idx1, idx2);
     }
     else if (next_op == '<' || next_op == '>' || next_op == '=' || next_op == '*' || next_op == '!'){

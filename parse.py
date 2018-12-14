@@ -212,8 +212,11 @@ class SelectParser:
         self.statement = statement
         self.splitted = statement.split(' ')
 
-        self.s_start, self.s_end, self.f_start, self.f_end = 0,0,0,None
+        self.s_start, self.s_end, self.f_start, self.f_end = 0,None,0,None
+        self.w_start, self.w_end = 0, None
+        self.g_start, self.g_end = 0,None
 
+        # group by parsing under maintenance
         for i, t in enumerate(self.splitted):
             if t.lower() == 'select':
                 self.s_start = i+1
@@ -223,7 +226,12 @@ class SelectParser:
                 pass
             elif t.lower() == 'where':
                 self.f_end = i
-                self.whereParser = WhereParser(' '.join(self.splitted[i+1:]))
+                self.w_start = i+1
+            elif t.lower() == 'group' and self.splitted[i+1].lower() == 'by':
+                self.w_end = i
+                if self.w_start == 0: self.w_start = self.w_end # if where clause not given
+                self.whereParser = WhereParser(' '.join(self.splitted[self.w_start:self.w_end]))
+                self.g_start = i+2
                 break
 
     def parse_select(self, select):
@@ -405,7 +413,8 @@ if __name__ == "__main__":
     '''
 
     insert_query = 'insert into student values(20123123, "student1" );'
-    select_query = 'select * from student where id > 20120000;'
     print(parse_insert(insert_query))
+    select_query = 'select name from student where (id < 30000000 and name = "wilson") or (id > 40000000 and name = "fredrick")'
+    print(select_query)
     print(parse_select(select_query))
 

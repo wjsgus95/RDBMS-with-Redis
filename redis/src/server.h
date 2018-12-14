@@ -609,7 +609,7 @@ typedef struct redisObject {
     int refcount;
     char*** table;
     char** column;
-    char* col_type;
+    char** col_type;
     size_t length;
     size_t max_length;
     size_t column_length;
