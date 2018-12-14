@@ -152,6 +152,7 @@ void relselectCommand(client* c) {
     int global_is_count = 0;
 
     int group_count = 0;
+    // Note: c->argc > 4 iff group by is given
     char *group_target = c->argc > 4 ? c->argv[4]->ptr : NULL;
     char **groups = NULL;
     int group_target_idx = -1;
@@ -238,11 +239,16 @@ void relselectCommand(client* c) {
     } 
     // if select columns
     else {
-        char *group_distinct_iter = calloc(1, 100);
+        char *group_distinct_iter = tableObj->table[0][group_target_idx];
+
+        long long sum[100], count[100];
+        memset(sum, 0, 100*sizeof(long long));
+        memset(count, 0, 100*sizeof(long long));
+
         addReplyLongLong(c, table_column_argc); numret++;
         for(int i = 0; i < tableObj->length; i++) {
             int is_distinct = 0;
-            if(group_target_idx >= 0 && strcmp(group_distinct_iter, tableObj->table[i][group_target_idx]) != 0) 
+            if(group_target_idx >= 0 && strcmp(group_distinct_iter, tableObj->table[(i+1)%(tableObj->length)][group_target_idx]) != 0) 
                 is_distinct = 1;
                 
             if((c->argc > 3 && parse_where(c->argv[3]->ptr, strlen(c->argv[3]->ptr), tableObj, NULL, i, 0)) ||
@@ -250,9 +256,18 @@ void relselectCommand(client* c) {
                 for(int j = 0; j < table_column_argc; j++) {
                     for(int k = 0; k < tableObj->column_length; k++) {
                         if(strcmp(tableObj->column[k], table_column_argv[j]) == 0) {
+                            if(table_is_sum[j]) sum[j] += atoi(tableObj->table[i][k]);
+                            if(table_is_count[j]) count[j]++;
+
                             if((group_target_idx >= 0 && is_distinct) || group_target_idx < 0) {
-                                addReplyBulkCBuffer(c, tableObj->table[i][k], strlen(tableObj->table[i][k]));
+                                if(table_is_sum[j])
+                                    addReplyLongLong(c, sum[j]);
+                                else if(table_is_count[j])
+                                    addReplyLongLong(c, count[j]);
+                                else
+                                    addReplyBulkCBuffer(c, tableObj->table[i][k], strlen(tableObj->table[i][k]));
                                 numret++;
+                                sum[j] = count[j] = 0;
                             }
                         }
                     }
@@ -260,11 +275,11 @@ void relselectCommand(client* c) {
             }
 
             if(is_distinct) {
-                memset(group_distinct_iter, 0, 100);
-                memcpy(group_distinct_iter, tableObj->table[i][group_target_idx], strlen(tableObj->table[i][group_target_idx]));
+                //memset(group_distinct_iter, 0, 100);
+                //memcpy(group_distinct_iter, tableObj->table[i][group_target_idx], strlen(tableObj->table[i][group_target_idx]));
+                group_distinct_iter = tableObj->table[(i+1)%(tableObj->length)][group_target_idx];
             }
         }
-        free(group_distinct_iter);
     }
 
     for(int i = 0; i < table_column_argc; i++) {

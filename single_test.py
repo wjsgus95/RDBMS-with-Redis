@@ -19,6 +19,10 @@ r.execute_command('relinsert', 'student', '\r3232323', '\rowen')
 r.execute_command('relinsert', 'student', '\r1234567', '\rwilson')
 
 #result = r.execute_command('relselect', 'student', 'id\rname')
-result = r.execute_command('relselect', 'student', ':name', '', 'name')
-
+result = r.execute_command('relselect', 'student', 's:id\r:name', '', 'name')
 print(result)
+result = r.execute_command('relselect', 'student', 'c:id\r:name', '', 'name')
+print(result)
+result = r.execute_command('relselect', 'student', ':id\rc:name', '', 'name')
+print(result)
+
