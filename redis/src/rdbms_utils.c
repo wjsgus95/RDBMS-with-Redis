@@ -5,16 +5,45 @@ typedef struct where_return{
     int offset;
 }whereReturn;
 
+void swap_row(char ***row1, char ***row2) {
+    char **temp = *row1;
+    *row1 = *row2;
+    *row2 = temp;
+}
+
+void quicksort_by_column(char*** table, size_t len, int idx) {
+    unsigned int i, pvt=0;
+
+    if (len <= 1)
+        return;
+
+    // swap a randomly selected value to the last node
+    swap_row(table+((unsigned int)rand() % len), table+len-1);
+
+    // reset the pivot index to zero, then scan
+    for (i=0;i<len-1;++i)
+    {
+        if (strcmp(table[i][idx], table[len-1][idx]) < 0)
+            swap_row(table+i, table+pvt++);
+    }
+
+    // move the pivot value into its place
+    swap_row(table+pvt, table+len-1);
+
+    // and invoke on the subsequences. does NOT include the pivot-slot
+    quicksort_by_column(table, pvt++, idx);
+    quicksort_by_column(table+pvt, len - pvt, idx);
+}
+
 int get_col_index(robj* table, char* colname){
     // linear search
     int i = 0;
-    for(i; i < table->length; ++i){
-        if (strcmp(colname, table->column[0])== 0){
+    for(; i < table->length; ++i){
+        if (strcmp(colname, table->column[i])== 0){
             return i;
         }
     }
     return -1;
-
 }
 
 int parse_terminal_size(char* str, int offset){
