@@ -168,7 +168,7 @@ class DeleteParser:
             w = self.whereParser.encode()
             return {'from': f, 'where': w}
         except:
-            return {'from': f}
+            return {'from': f, 'where': None}
 
 class UpdateParser:
     def __init__(self, statement):
@@ -200,7 +200,7 @@ class UpdateParser:
             w = self.whereParser.encode()
             return {'update': s, 'set': f, 'where': w}
         except:
-            return {'update': s, 'set': f}
+            return {'update': s, 'set': f, 'where': None}
 
 
 
@@ -214,7 +214,7 @@ class SelectParser:
 
         self.s_start, self.s_end, self.f_start, self.f_end = 0,None,0,None
         self.w_start, self.w_end = 0, None
-        self.g_start, self.g_end = 0,None
+        self.g_idx = None
 
         # group by parsing under maintenance
         for i, t in enumerate(self.splitted):
@@ -227,11 +227,13 @@ class SelectParser:
             elif t.lower() == 'where':
                 self.f_end = i
                 self.w_start = i+1
+            # Note: where clause always precedes group by clause
             elif t.lower() == 'group' and self.splitted[i+1].lower() == 'by':
                 self.w_end = i
+                if self.f_end == None: self.f_end = i # if where clause not given
                 if self.w_start == 0: self.w_start = self.w_end # if where clause not given
                 self.whereParser = WhereParser(' '.join(self.splitted[self.w_start:self.w_end]))
-                self.g_start = i+2
+                self.g_idx = i+2
                 break
 
     def parse_select(self, select):
@@ -263,8 +265,12 @@ class SelectParser:
         f = ' '.join(self.splitted[self.f_start:self.f_end]).replace(' ', '').replace(',', '\r').encode('ascii')
         try:
             w = self.whereParser.encode()
+            if self.g_idx != None:
+                return {'select': s, 'from': f, 'where': w, 'group_by': self.splitted[self.g_idx].encode()}
             return {'select': s, 'from': f, 'where': w}
         except:
+            if self.g_idx != None:
+                return {'select': s, 'from': f, 'where': None, 'group_by': self.splitted[self.g_idx].encode()}
             return {'select': s, 'from': f, 'where': None}
 
 class WhereParser:
@@ -272,7 +278,8 @@ class WhereParser:
         self.conditional_operators = ['>=', '!=', '<=', '>', '=', '<', 'like']
         self.where_keywords = ['and', 'or', 'like']
         self.global_header = 0
-        self.token_list = self.split_where_clause_to_list(statement)
+        if statement != '':
+            self.token_list = self.split_where_clause_to_list(statement)
 
 
     def uncapitalize_keywords(self, token_list):
@@ -414,7 +421,8 @@ if __name__ == "__main__":
 
     insert_query = 'insert into student values(20123123, "student1" );'
     print(parse_insert(insert_query))
-    select_query = 'select name from student where (id < 30000000 and name = "wilson") or (id > 40000000 and name = "fredrick")'
+    #select_query = 'select name from student where (id < 30000000 and name = "wilson") or (id > 40000000 and name = "fredrick") group by name'
+    select_query = 'select sum(id), name from student group by name'
     print(select_query)
     print(parse_select(select_query))
 
