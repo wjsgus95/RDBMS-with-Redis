@@ -342,15 +342,88 @@ int parse_where(char* str, size_t len, robj* tableObj1, robj* tableObj2, int idx
 
 
 void set_unit_op(char* str, robj* tableObj, int idx){
-    int col_idx;
+    int col_idx, col_idx2;
     int header = 0;
+    int start_header;
     char* str1, str2;
+    char op;
+    float val1, val2;
+    int retval;
+    int n_digits;
+    char** row = (char ***) tableObj + idx;
+    // get target column idx
     while(str[header] != '#' && str[header] != '\"'){
         header++;
     }
     str1 = (char*) calloc(1, header + 1);
+    memcpy(str1, str, header);
     col_idx = get_col_idx(str1, tableObj->column, tableObj->column_length);
-    if (str[header] =='#')
+    free(str1);
+    if (str[header++] == '\"'){
+        // assign rvalue
+        start_header = header;
+        while(str[header] != '\0'){
+            header++;
+        }
+        str1 = (char*) calloc(1, header - start_header + 1);
+        memcpy(str1, str, header - start_header);
+        free(row[col_idx]);
+        row[col_idx] = str1;
+        return;
+    }
+    else{
+        // get first operend
+        start_header = header;
+        while(str[header] != '+' && str[header] != '*' && str[header] != '-'){
+            header++;
+        }
+        str1 = (char*) calloc(1, header - start_header + 1);
+        memcpy(str1, str, header - start_header);
+        // get operator
+        op = str[header++];
+        // get second operend
+        start_header = header;
+        while(str[header] != '\0'){
+            header++;
+        }
+        str2 = (char*) calloc(1, header - start_header + 1);
+        memcpy(str2, str, header - start_header);
+        // check whether they are columns
+        col_idx2 = get_col_idx(str1, tableObj->column, tableObj->column_length);
+        if (col_idx2 != -1)
+            val1 = (float) row[col_idx2];
+        else
+            val1 = strtof(str1, NULL);
+        col_idx2 = get_col_idx(str2, tableObj->column, tableObj->column_length);
+        if (col_idx2 != -1)
+            val2 = (float) row[col_idx2];
+        else
+            val2 = strtof(str2, NULL);
+        free(str1);
+        free(str2);
+        // obtain result
+        switch(op){
+            case '+':
+                val1 += val2;
+                break;
+            case '-':
+                val1 -= val2;
+                break;
+            case '*':
+                val1 *= val2;
+                break;
+            default:
+                fprintf(stderr, "unknown operator %c\n", op);
+                return;
+        }
+        // save the result
+        retval = (int) val1;
+        n_digits = (int)((ceil(log10(retval))+1)*sizeof(char));
+        str1 = (char*) calloc(1, n_digits);
+        sprintf(str1, "%d", n_digits);
+        row[col_idx] = str1;
+        return;
+    }
 }
 
 void parse_set(char* str, robj* tableObj, int idx, int start_header){
