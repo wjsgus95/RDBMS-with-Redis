@@ -176,7 +176,7 @@ class UpdateParser:
         statement = remove_extra_blanks(statement)
         self.statement = statement
         self.splitted = statement.split(' ')
-        self.operators = ['=', '+', '-']
+        self.operators = ['=', '+', '-', '*']
         for i, t in enumerate(self.splitted):
             if t.lower() == 'update':
                 self.s_start = i+1
