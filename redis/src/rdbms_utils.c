@@ -391,12 +391,12 @@ void set_unit_op(char* str, robj* tableObj, int idx){
         // check whether they are columns
         col_idx2 = get_col_idx(str1, tableObj->column, tableObj->column_length);
         if (col_idx2 != -1)
-            val1 = (float) row[col_idx2];
+            val1 = (float) strtof(row[col_idx2], NULL);
         else
             val1 = strtof(str1, NULL);
         col_idx2 = get_col_idx(str2, tableObj->column, tableObj->column_length);
         if (col_idx2 != -1)
-            val2 = (float) row[col_idx2];
+            val2 = (float) strtof(row[col_idx2], NULL);
         else
             val2 = strtof(str2, NULL);
         free(str1);
