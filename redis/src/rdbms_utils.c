@@ -342,6 +342,15 @@ int parse_where(char* str, size_t len, robj* tableObj1, robj* tableObj2, int idx
 
 
 void set_unit_op(char* str, robj* tableObj, int idx){
+    int col_idx;
+    int header = 0;
+    char* str1, str2;
+    while(str[header] != '#' && str[header] != '\"'){
+        header++;
+    }
+    str1 = (char*) calloc(1, header + 1);
+    col_idx = get_col_idx(str1, tableObj->column, tableObj->column_length);
+    if (str[header] =='#')
 }
 
 void parse_set(char* str, robj* tableObj, int idx, int start_header){
@@ -355,6 +364,8 @@ void parse_set(char* str, robj* tableObj, int idx, int start_header){
     }
     unit_op = (char*) calloc(1, header - start_header + 1);
     memcpy(unit_op, str, header-start_header);
+    set_unit_op(unit_op, tableObj, idx);
+    free(unit_op);
 
     if (str[header] == '\0'){
         return;
