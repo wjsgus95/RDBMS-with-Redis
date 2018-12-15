@@ -3,6 +3,9 @@
 #define need_expand(x) ((((x)->length >= (x)->max_length)))
 #define group_need_expand(x) ((((x)->group_length >= (x)->group_max_length)))
 
+int having_op(char*, long long, int);
+int get_having_literal(char*);
+
 // not using this for now, incompatible with redis-cluster-py, use KEYS command instead
 void relshowCommand(client* c) {
     dictIterator *di;
@@ -186,6 +189,8 @@ void relselectCommand(client* c) {
 
     char* table_column_argv[100];
     int table_column_size[100];
+    // argument to index
+    int a2i[100];
 
     int table_is_sum[100];
     int table_is_count[100];
@@ -204,15 +209,30 @@ void relselectCommand(client* c) {
     }
 
     char *having_clause = c->argc > 5 ? c->argv[5]->ptr : NULL;
-    int (*op_callback)(long long, int) = get_having_op(having_clause);
+    int having_literal = -1;
     int is_having_count = 0, is_having_sum = 0;
+    int having_col_idx = -1;
     if(having_clause != NULL) {
+        having_literal = get_having_literal(having_clause);
         if((*(having_clause+1) == 'c' && *(having_clause+2) == ':') ||
-                (*(having_clause+2) == 'c' && *(having_clause+3) == ':'))
+                (*(having_clause+2) == 'c' && *(having_clause+3) == ':')) {
             is_having_count = 1;
+            char* col = calloc(100, sizeof(char));
+            size_t len = 0;
+            while(*(having_clause+len) != '#' && *(having_clause+len) != '"')
+                len++;
+            size_t sub = 0;
+            while(*(having_clause+sub) != ':')
+                sub++;
+            sub++;
+            len = len - sub;
+            memcpy(col, having_clause+sub, len);
+            having_col_idx = get_col_index(tableObj, col);
+        }
         else if((*(having_clause+1) == 's' && *(having_clause+2) == ':') ||
-                (*(having_clause+2) == 's' && *(having_clause+3) == ':'))
+                (*(having_clause+2) == 's' && *(having_clause+3) == ':')) {
             is_having_sum = 1;
+        }
     }
 
     int table_column_argc = 0;
@@ -243,6 +263,7 @@ void relselectCommand(client* c) {
             table_column_argv[table_column_argc] = (char*)calloc(current_size, sizeof(char));
             // Note: Non-NULL terminated
             memcpy(table_column_argv[table_column_argc], past_iter, current_size);
+            a2i[table_column_argc] = get_col_index(tableObj, table_column_argv[table_column_argc]);
              
             table_column_size[table_column_argc++] = current_size;
             current_size = 0;
@@ -257,6 +278,7 @@ void relselectCommand(client* c) {
 
     // Note: Non-NULL terminated
     memcpy(table_column_argv[table_column_argc], past_iter, current_size);
+    a2i[table_column_argc] = get_col_index(tableObj, table_column_argv[table_column_argc]);
     table_column_size[table_column_argc++] = current_size;
 
     if(group_target_idx >= 0) {
@@ -304,6 +326,8 @@ void relselectCommand(client* c) {
         memset(sum, 0, 100*sizeof(long long));
         memset(count, 0, 100*sizeof(long long));
 
+        long long h_sum = 0, h_count = 0;
+
         addReplyLongLong(c, table_column_argc); numret++;
         for(int i = 0; i < tableObj->length; i++) {
             int is_distinct = 0;
@@ -313,24 +337,31 @@ void relselectCommand(client* c) {
             if((c->argc > 3 && parse_where(c->argv[3]->ptr, strlen(c->argv[3]->ptr), tableObj, NULL, i, 0)) ||
                     c->argc <= 3) {
                 for(int j = 0; j < table_column_argc; j++) {
-                    for(int k = 0; k < tableObj->column_length; k++) {
-                        if(strcmp(tableObj->column[k], table_column_argv[j]) == 0) {
-                            if(table_is_sum[j]) sum[j] += atoi(tableObj->table[i][k]);
-                            if(table_is_count[j]) count[j]++;
+                    if(table_is_sum[j]) sum[j] += atoi(tableObj->table[i][a2i[j]]);
+                    if(table_is_count[j]) count[j]++;
+                    if(having_col_idx == a2i[j]) {
+                        fprintf(stderr, "j = %d, i = %d, table[%d][%d] = %s\n", j, i, i, a2i[j], tableObj->table[i][a2i[j]]);
+                        if(is_having_count) h_count++;
+                        else h_sum += atoi(tableObj->table[i][a2i[j]]);
+                    }
 
-                            if((group_target_idx >= 0 && is_distinct) || group_target_idx < 0) {
-                                if(having_clause == NULL) {
-                                    if(table_is_sum[j])
-                                        addReplyLongLong(c, sum[j]);
-                                    else if(table_is_count[j])
-                                        addReplyLongLong(c, count[j]);
-                                    else
-                                        addReplyBulkCBuffer(c, tableObj->table[i][k], strlen(tableObj->table[i][k]));
+                    if((group_target_idx >= 0 && is_distinct) || group_target_idx < 0) {
+                        if(having_clause == NULL) {
+                            if(table_is_sum[j])
+                                addReplyLongLong(c, sum[j]);
+                            else if(table_is_count[j])
+                                addReplyLongLong(c, count[j]);
+                            else
+                                addReplyBulkCBuffer(c, tableObj->table[i][a2i[j]], strlen(tableObj->table[i][a2i[j]]));
+                            numret++;
+                            sum[j] = count[j] = 0;
+                        }
+                        else{
+                            if(group_target_idx >= 0) {
+                                if((is_having_sum && having_op(having_clause, h_sum, having_literal)) ||
+                                        (is_having_count && having_op(having_clause, h_count, having_literal))) {
+                                    addReplyBulkCBuffer(c, tableObj->table[i][a2i[j]], strlen(tableObj->table[i][a2i[j]]));
                                     numret++;
-                                    sum[j] = count[j] = 0;
-                                }
-                                else{
-
                                 }
                             }
                         }
@@ -340,6 +371,7 @@ void relselectCommand(client* c) {
 
             if(is_distinct) {
                 group_distinct_iter = tableObj->table[(i+1)%(tableObj->length)][group_target_idx];
+                h_sum = h_count = 0;
             }
         }
     }
@@ -360,14 +392,64 @@ int get_having_literal(char *cond) {
         iter++;
     iter++;
     ret = atoi(iter);
-    return ret
+    return ret;
 }
 
-void* get_having_op(char *cond) {
+int equal_less(long long sum_or_count, int literal) {
+    return sum_or_count <= literal;
+}
+
+int equal(long long sum_or_count, int literal) {
+    return sum_or_count == literal;
+}
+
+int equal_greater(long long sum_or_count, int literal) {
+    return sum_or_count >= literal;
+}
+
+int not_equal(long long sum_or_count, int literal) {
+    return !(sum_or_count == literal);
+}
+
+int less(long long sum_or_count, int literal) {
+    return sum_or_count < literal;
+}
+
+int greater(long long sum_or_count, int literal) {
+    return sum_or_count > literal;
+}
+
+int having_op(char *cond, long long sum_or_count, int literal) {
     char* iter = cond;
     while(*iter != '<' && *iter != '=' && *iter != '>'
             && *iter != '!')
+        iter++;
 
+    switch(*iter) {
+        case '<':
+            if(*(iter+1) == '=')
+                return equal_less(sum_or_count, literal);
+            else
+                return less(sum_or_count, literal);
+            break;
+        case '>':
+            if(*(iter+1) == '=')
+                return equal_greater(sum_or_count, literal);
+            else
+                return greater(sum_or_count, literal);
+            break;
+        case '=':
+            return equal(sum_or_count, literal);
+            break;
+        case '!':
+            if(*(iter+1) == '=')
+                return not_equal(sum_or_count, literal);
+        default:
+            fprintf(stderr, "wrong type of operator %c in parse_have\n", *cond);
+            exit(1);
+    }
+}
+ 
 /*
 int eval_having_cond(char *cond, long long sum_or_count, int literal) {
     switch(*cond) {
