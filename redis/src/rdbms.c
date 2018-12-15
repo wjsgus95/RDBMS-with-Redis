@@ -51,14 +51,14 @@ void relinsertCommand(client* c) {
         }
     }
 
-    tableObj->table[tableObj->length] = calloc(1, tableObj->column_length);
+    tableObj->table[tableObj->length] = calloc(1, tableObj->column_length * sizeof(char*));
 
     // Note: argc not necessarily all values to be inserted (could be "column name\rcolumn value")
     if((((char*)c->argv[2]->ptr)[0]) == '\r') {
         for(int i = 2; i < c->argc; i++) {
             const size_t iter = 1;
-            tableObj->table[tableObj->length][i-2] = calloc(1, sdslen(c->argv[i]->ptr)-iter);
-            memcpy(tableObj->table[tableObj->length][i-2], (((char*)c->argv[i]->ptr)+iter), sdslen(c->argv[i]->ptr)-iter);
+            tableObj->table[tableObj->length][i-2] = calloc(1, strlen(c->argv[i]->ptr)-iter);
+            memcpy(tableObj->table[tableObj->length][i-2], (((char*)c->argv[i]->ptr)+iter), strlen(c->argv[i]->ptr)-iter);
         }
     } else {
         for(int i = 2; i < c->argc; i++) {
@@ -125,7 +125,15 @@ void relcreateCommand(client* c) {
 }
 
 void relupdateCommand(client* c) {
+    robj* tableObj = lookupKeyRead(c->db, c->argv[1]);
+    const char* set = c->argv[2]->ptr;
+    const char* cond = c->argv[3]->ptr;
 
+    for(int i = 0; i < tableObj->length; i++) {
+        if(parse_where(cond, strlen(cond), tableObj, NULL, i, 0)) {
+            parse_set(set, tableObj, i, 0);
+        }
+    }
 }
 
 void reldeleteCommand(client* c) {
@@ -165,6 +173,7 @@ void reldeleteCommand(client* c) {
     }
     tableObj->length = iter;
     free(temp);
+    free(row_mark);
             
     addReplyMultiBulkLen(c, 1);
     addReplyBulkCBuffer(c, "OK", sizeof("OK")-1);
@@ -329,3 +338,27 @@ void relselectCommand(client* c) {
     return;
 }
 
+
+int parse_having(char *cond, robj* tableObj, int row_idx, long long sum, long long count) {
+    switch(*cond) {
+        case '<':
+            if(*(cond+1) == 'c' && *(cond+2) == ':')
+            break;
+        case '>':
+            break;
+        case '=':
+            break;
+        case '!':
+            break;
+        default:
+            fprintf(stderr, "wrong type of operator %c in parse_have\n", *cond);
+            exit(1);
+    }
+
+    if(*cond == 'c' && *(cond+1) == ':') {
+
+    }
+    else if(*cond == 's' && *(cond+1) == ':') {
+    
+    }
+}

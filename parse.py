@@ -299,6 +299,16 @@ class WhereParser:
         self.conditional_operators = ['>=', '!=', '<=', '>', '=', '<', 'like']
         self.where_keywords = ['and', 'or', 'like']
         self.global_header = 0
+
+        # two while loops to support having clause
+        while statement.find('count(') >= 0:
+            idx = statement.find('count(')
+            statement = statement[0:idx] + statement[idx:idx+6].replace('count(', 'c:', 1) + statement[idx+6:].replace(')', '', 1)
+
+        while statement.find('sum(') >= 0:
+            idx = statement.find('sum(')
+            statement = statement[0:idx] + statement[idx:idx+4].replace('sum(', 's:', 1) + statement[idx+6:].replace(')', '', 1)
+
         if statement != '':
             self.token_list = self.split_where_clause_to_list(statement)
 
@@ -440,7 +450,7 @@ if __name__ == "__main__":
 
     insert_query = 'insert into student values(20123123, "student1" );'
     print(parse_insert(insert_query))
-    select_query = 'select name from student where (id < 30000000 and name = "wilson") or (id > 40000000 and name = "fredrick") group by name having id > 1000'
+    select_query = 'select name from student where (id < 30000000 and name = "wilson") or (id > 40000000 and name = "fredrick") group by name having count(id) > 1000'
     print(parse_select(select_query))
     #import ipdb; ipdb.set_trace()
 
