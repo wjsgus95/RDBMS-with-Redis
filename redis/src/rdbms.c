@@ -202,8 +202,18 @@ void relselectCommand(client* c) {
     if(group_target != NULL) {
         group_target_idx = get_col_index(tableObj, group_target);
     }
-    char *having_clause = c->argc > 5 ? c->argv[5]->ptr : NULL;
 
+    char *having_clause = c->argc > 5 ? c->argv[5]->ptr : NULL;
+    int (*op_callback)(long long, int) = get_having_op(having_clause);
+    int is_having_count = 0, is_having_sum = 0;
+    if(having_clause != NULL) {
+        if((*(having_clause+1) == 'c' && *(having_clause+2) == ':') ||
+                (*(having_clause+2) == 'c' && *(having_clause+3) == ':'))
+            is_having_count = 1;
+        else if((*(having_clause+1) == 's' && *(having_clause+2) == ':') ||
+                (*(having_clause+2) == 's' && *(having_clause+3) == ':'))
+            is_having_sum = 1;
+    }
 
     int table_column_argc = 0;
     size_t current_size = 0, numret = 0;
@@ -309,14 +319,19 @@ void relselectCommand(client* c) {
                             if(table_is_count[j]) count[j]++;
 
                             if((group_target_idx >= 0 && is_distinct) || group_target_idx < 0) {
-                                if(table_is_sum[j])
-                                    addReplyLongLong(c, sum[j]);
-                                else if(table_is_count[j])
-                                    addReplyLongLong(c, count[j]);
-                                else
-                                    addReplyBulkCBuffer(c, tableObj->table[i][k], strlen(tableObj->table[i][k]));
-                                numret++;
-                                sum[j] = count[j] = 0;
+                                if(having_clause == NULL) {
+                                    if(table_is_sum[j])
+                                        addReplyLongLong(c, sum[j]);
+                                    else if(table_is_count[j])
+                                        addReplyLongLong(c, count[j]);
+                                    else
+                                        addReplyBulkCBuffer(c, tableObj->table[i][k], strlen(tableObj->table[i][k]));
+                                    numret++;
+                                    sum[j] = count[j] = 0;
+                                }
+                                else{
+
+                                }
                             }
                         }
                     }
@@ -338,11 +353,28 @@ void relselectCommand(client* c) {
     return;
 }
 
+int get_having_literal(char *cond) {
+    int ret = -1;
+    char *iter = cond;
+    while(*iter != '#' && *iter != '"')
+        iter++;
+    iter++;
+    ret = atoi(iter);
+    return ret
+}
 
-int parse_having(char *cond, robj* tableObj, int row_idx, long long sum, long long count) {
+void* get_having_op(char *cond) {
+    char* iter = cond;
+    while(*iter != '<' && *iter != '=' && *iter != '>'
+            && *iter != '!')
+
+/*
+int eval_having_cond(char *cond, long long sum_or_count, int literal) {
     switch(*cond) {
         case '<':
-            if(*(cond+1) == 'c' && *(cond+2) == ':')
+            //if(*(cond+1) == '=')
+
+            //else if(*(cond+1) == 'c' && *(cond+2) == ':')
             break;
         case '>':
             break;
@@ -362,3 +394,4 @@ int parse_having(char *cond, robj* tableObj, int row_idx, long long sum, long lo
     
     }
 }
+*/

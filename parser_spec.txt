@@ -17,6 +17,7 @@ parse_select(statement)
         select: binary string (for count and sum, ':' is used)
         from: binary string (tables splitted by '\r')
         where: binary string if exists (for conditional operations (ex. equal, like, ...), '#' is used) else None
+                seperate with '#' if column name follows, otherwise '"'
         group_by: byte string if exists (simple column name b'column') else None
         having: byte string if exists (encoded condition) else None
     )
