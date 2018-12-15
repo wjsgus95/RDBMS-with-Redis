@@ -23,7 +23,7 @@ parse_select(statement)
 parse_update(statement)
     return dict(
         set: binary string (table name)
-        update: binary string ('='->'#', ','->'\r')
+        update: binary string ('='->'#' when expr, '='->'\"' when DEFAULT, ','->'\r')
         where: binary string if exists (for conditional operations (ex. equal, like, ...), '#' is used) else None
     )
 
