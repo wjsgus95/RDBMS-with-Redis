@@ -38,6 +38,7 @@ void quicksort_by_column(char*** table, size_t len, int idx) {
 int get_col_index(robj* table, char* colname){
     // linear search
     int i = 0;
+    if(*colname == NULL) return -1;
     for(; i < table->length; ++i){
         if (strcmp(colname, table->column[i])== 0){
             return i;
@@ -337,4 +338,29 @@ int parse_where(char* str, size_t len, robj* tableObj1, robj* tableObj2, int idx
     int ret_val = parse_where_recursive(str, header_point, len, tableObj1, tableObj2, idx1, idx2);
     free(header_point);
     return ret_val;
+}
+
+
+void set_unit_op(char* str, robj* tableObj, int idx){
+}
+
+void parse_set(char* str, robj* tableObj, int idx, int start_header){
+    char* unit_op;
+    int header = start_header;
+    while (str[header] != '\r' && str[header] != '\0'){
+        header++;
+    }
+    if (start_header == header){
+        return;
+    }
+    unit_op = (char*) calloc(1, header - start_header + 1);
+    memcpy(unit_op, str, header-start_header);
+
+    if (str[header] == '\0'){
+        reuturn;
+    }
+    else{
+        parse_set(str, tableObj, idx, header);
+    }
+
 }
