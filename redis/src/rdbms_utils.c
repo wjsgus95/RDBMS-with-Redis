@@ -357,7 +357,7 @@ void parse_set(char* str, robj* tableObj, int idx, int start_header){
     memcpy(unit_op, str, header-start_header);
 
     if (str[header] == '\0'){
-        reuturn;
+        return;
     }
     else{
         parse_set(str, tableObj, idx, header);

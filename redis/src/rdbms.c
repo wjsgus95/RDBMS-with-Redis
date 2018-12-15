@@ -3,9 +3,6 @@
 #define need_expand(x) ((((x)->length >= (x)->max_length)))
 #define group_need_expand(x) ((((x)->group_length >= (x)->group_max_length)))
 
-#define and(x) (x == '&');
-#define or(x) (x == '|');
-
 // not using this for now, incompatible with redis-cluster-py, use KEYS command instead
 void relshowCommand(client* c) {
     dictIterator *di;
@@ -132,7 +129,45 @@ void relupdateCommand(client* c) {
 }
 
 void reldeleteCommand(client* c) {
+    robj* tableObj = lookupKeyRead(c->db, c->argv[1]);
+    const char* cond = c->argc > 2 ? c->argv[2]->ptr : NULL;
+    int *row_mark = calloc(1, (tableObj->length) * sizeof(int));
+    unsigned int new_size = tableObj->length;
 
+    for(int i = 0; i < tableObj->length; i++) {
+        if(parse_where(cond, strlen(cond), tableObj, NULL, i, 0)) {
+            for(int j = 0; j < tableObj->column_length; j++) {
+                free(tableObj->table[i][j]);
+            }
+            free(tableObj->table[i]);
+            new_size--;
+            row_mark[i] = 1;
+        }
+    }
+
+    // Note: max_length = 4 at minimum
+    unsigned int new_size_round_up = 2;
+    do {
+        new_size_round_up <<= 1;
+    } while(new_size_round_up < new_size);
+
+    char ***temp = tableObj->table;
+    tableObj->table = calloc(new_size_round_up, sizeof(char**));
+    tableObj->max_length = new_size_round_up;
+
+    unsigned int iter = 0;
+    for(int i = 0; i < tableObj->length; i++) {
+        if(!row_mark[i]) {
+            tableObj->table[iter] = temp[i];
+            fprintf(stderr, "table[%d][1] = %s\n", iter, tableObj->table[iter][1]);
+            iter++;
+        }
+    }
+    tableObj->length = iter;
+    free(temp);
+            
+    addReplyMultiBulkLen(c, 1);
+    addReplyBulkCBuffer(c, "OK", sizeof("OK")-1);
 }
 
 
@@ -154,26 +189,11 @@ void relselectCommand(client* c) {
     int group_count = 0;
     // Note: c->argc > 4 iff group by is given
     char *group_target = c->argc > 4 ? c->argv[4]->ptr : NULL;
-    char **groups = NULL;
     int group_target_idx = -1;
     if(group_target != NULL) {
         group_target_idx = get_col_index(tableObj, group_target);
-        //fprintf(stderr, "group_target_idx = %d\n", group_target_idx);
-        //groups = calloc(1, tableObj->length);
-        //for(int no_duplicate, i = 0; i < tableObj->length; i++) {
-        //    no_duplicate = 1;
-        //    for(int j = 0; j < group_count; j++) {
-        //        if(strcmp(groups[j], tableObj->table[i][group_target_idx]) == 0) {
-        //            no_duplicate = 0;
-        //        }
-        //    }
-        //    if(no_duplicate) {
-        //        size_t len = strlen(tableObj->table[i][group_target_idx]);
-        //        groups[group_count] = calloc(1, len);
-        //        memcpy(groups[group_count++], tableObj->table[i][group_target_idx], len);
-        //    }
-        //}
     }
+    char *having_clause = c->argc > 5 ? c->argv[5]->ptr : NULL;
 
 
     int table_column_argc = 0;
@@ -226,14 +246,34 @@ void relselectCommand(client* c) {
 
     // if select *
     if(is_select_all) {
+        char *group_distinct_iter = tableObj->table[0][group_target_idx];
+
         addReplyLongLong(c, tableObj->column_length); numret++;
-        for(int i = 0; i < tableObj->column_length; i++) {
-            for(int j = 0; j < tableObj->length; j++) {
-                if((c->argc > 3 && parse_where(c->argv[3]->ptr, strlen(c->argv[3]->ptr), tableObj, NULL, j, 0)) ||
-                        c->argc <= 3) {
-                    addReplyBulkCBuffer(c, tableObj->table[j][i], strlen(tableObj->table[j][i]));
-                    numret++;
+        //for(int i = 0; i < tableObj->column_length; i++) {
+        //    for(int j = 0; j < tableObj->length; j++) {
+        //        if((c->argc > 3 && parse_where(c->argv[3]->ptr, strlen(c->argv[3]->ptr), tableObj, NULL, j, 0)) ||
+        //                c->argc <= 3) {
+        //            addReplyBulkCBuffer(c, tableObj->table[j][i], strlen(tableObj->table[j][i]));
+        //            numret++;
+        //        }
+        //    }
+        //}
+        for(int i = 0; i < tableObj->length; i++) {
+            int is_distinct = 0;
+            if(group_target_idx >= 0 && strcmp(group_distinct_iter, tableObj->table[(i+1)%(tableObj->length)][group_target_idx]) != 0) 
+                is_distinct = 1;
+                
+            if((c->argc > 3 && parse_where(c->argv[3]->ptr, strlen(c->argv[3]->ptr), tableObj, NULL, i, 0)) ||
+                    c->argc <= 3) {
+                for(int j = 0; j < tableObj->column_length; j++) {
+                    if((group_target_idx >= 0 && is_distinct) || group_target_idx < 0) {
+                        addReplyBulkCBuffer(c, tableObj->table[i][j], strlen(tableObj->table[i][j]));
+                        numret++;
+                    }
                 }
+            }
+            if(is_distinct) {
+                group_distinct_iter = tableObj->table[(i+1)%(tableObj->length)][group_target_idx];
             }
         }
     } 
@@ -275,8 +315,6 @@ void relselectCommand(client* c) {
             }
 
             if(is_distinct) {
-                //memset(group_distinct_iter, 0, 100);
-                //memcpy(group_distinct_iter, tableObj->table[i][group_target_idx], strlen(tableObj->table[i][group_target_idx]));
                 group_distinct_iter = tableObj->table[(i+1)%(tableObj->length)][group_target_idx];
             }
         }
@@ -285,10 +323,6 @@ void relselectCommand(client* c) {
     for(int i = 0; i < table_column_argc; i++) {
         free(table_column_argv[i]);
     }
-    //for(int i = 0; i < group_count; i++) {
-    //    free(groups[i]);
-    //}
-    //free(groups);
 
     decrRefCount(columns);
     setDeferredMultiBulkLength(c,replylen,numret);

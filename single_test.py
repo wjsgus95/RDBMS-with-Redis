@@ -25,4 +25,8 @@ result = r.execute_command('relselect', 'student', 'c:id\r:name', '', 'name')
 print(result)
 result = r.execute_command('relselect', 'student', ':id\rc:name', '', 'name')
 print(result)
+result = r.execute_command('relselect', 'student', ':*', '', 'name')
+print(result)
+result = r.execute_command('reldelete', 'student', '=name"vincent')
+result = r.execute_command('relselect', 'student', ':*', '', '')
 

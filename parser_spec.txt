@@ -18,6 +18,7 @@ parse_select(statement)
         from: binary string (tables splitted by '\r')
         where: binary string if exists (for conditional operations (ex. equal, like, ...), '#' is used) else None
         group_by: byte string if exists (simple column name b'column') else None
+        having: byte string if exists (encoded condition) else None
     )
 
 parse_update(statement)

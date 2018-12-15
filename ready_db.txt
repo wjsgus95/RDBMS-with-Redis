@@ -18,3 +18,4 @@ insert into student values(32325311, "teacher1" );
 insert into student values(32329311, "teacher1" );
 
 select name from student where (id < 30000000 and name = "wilson") or (id > 40000000 and name = "fredrick")
+select * from student;

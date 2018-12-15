@@ -225,6 +225,7 @@ class SelectParser:
         self.s_start, self.s_end, self.f_start, self.f_end = 0,None,0,None
         self.w_start, self.w_end = 0, None
         self.g_idx = None
+        self.h_idx = None
 
         # group by parsing under maintenance
         for i, t in enumerate(self.splitted):
@@ -244,7 +245,11 @@ class SelectParser:
                 if self.w_start == 0: self.w_start = self.w_end # if where clause not given
                 self.whereParser = WhereParser(' '.join(self.splitted[self.w_start:self.w_end]))
                 self.g_idx = i+2
+            elif t.lower() == 'having':
+                self.h_idx = i+1
+                self.havingParser = WhereParser(' '.join(self.splitted[self.h_idx:]))
                 break
+
 
     def parse_select(self, select):
         select_list = select.split('\r')
@@ -276,10 +281,16 @@ class SelectParser:
         try:
             w = self.whereParser.encode()
             if self.g_idx != None:
+                if self.h_idx != None:
+                    h = self.havingParser.encode()
+                    return {'select': s, 'from': f, 'where': w, 'group_by': self.splitted[self.g_idx].encode(), 'having': h}
                 return {'select': s, 'from': f, 'where': w, 'group_by': self.splitted[self.g_idx].encode()}
             return {'select': s, 'from': f, 'where': w}
         except:
             if self.g_idx != None:
+                if self.h_idx != None:
+                    h = self.havingParser.encode()
+                    return {'select': s, 'from': f, 'where': w, 'group_by': self.splitted[self.g_idx].encode(), 'having': h}
                 return {'select': s, 'from': f, 'where': None, 'group_by': self.splitted[self.g_idx].encode()}
             return {'select': s, 'from': f, 'where': None}
 
@@ -429,9 +440,7 @@ if __name__ == "__main__":
 
     insert_query = 'insert into student values(20123123, "student1" );'
     print(parse_insert(insert_query))
-    #select_query = 'select name from student where (id < 30000000 and name = "wilson") or (id > 40000000 and name = "fredrick") group by name'
-    select_query = 'select sum(id), name from student group by name'
-    print(select_query)
+    select_query = 'select name from student where (id < 30000000 and name = "wilson") or (id > 40000000 and name = "fredrick") group by name having id > 1000'
     print(parse_select(select_query))
-    import ipdb; ipdb.set_trace()
+    #import ipdb; ipdb.set_trace()
 
