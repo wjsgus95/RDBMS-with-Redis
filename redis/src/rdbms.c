@@ -251,8 +251,10 @@ void relselectCommand(client* c) {
     char* past_iter = iter;
 
     int is_select_all = 0;
-    if(*iter == ':' && *(iter+1) == '*')
+    if(*iter == ':' && *(iter+1) == '*') {
         is_select_all = 1;
+        iter += 2;
+    }
 
     while (*iter != '\0') {
         if(*iter == 'c' && *(iter+1) == ':') {

@@ -384,15 +384,21 @@ void set_unit_op(char* str, robj* tableObj, int idx){
         }
         str1 = (char*) calloc(1, header - start_header + 1);
         memcpy(str1, str+start_header, header - start_header);
+        fprintf(stderr, "first operend %s\n", str1);
         // get operator
         op = str[header++];
+        fprintf(stderr, "operator: %c\n", op);
         // get second operend
         start_header = header;
+        fprintf(stderr, "operend2 start %c\n", str[header]);
         while(str[header] != '\0'){
+            fprintf(stderr, "operend2 while  %c\n", str[header]);
             header++;
         }
+        fprintf(stderr, "header=%d, start_header=%d\n", header, start_header);
         str2 = (char*) calloc(1, header - start_header + 1);
         memcpy(str2, str+start_header, header - start_header);
+        fprintf(stderr, "second operend %s\n", str2);
         // check whether they are columns
         col_idx2 = get_col_idx(str1, tableObj->column, tableObj->column_length);
         if (col_idx2 != -1)
