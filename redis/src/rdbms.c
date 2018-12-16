@@ -133,10 +133,13 @@ void relupdateCommand(client* c) {
     const char* cond = c->argv[3]->ptr;
 
     for(int i = 0; i < tableObj->length; i++) {
+        fprintf(stderr, "main for loop for update command\n");
         if(parse_where(cond, strlen(cond), tableObj, NULL, i, 0)) {
             parse_set(set, tableObj, i, 0);
         }
     }
+    fprintf(stderr, "escaped from main for loop\n");
+    return;
 }
 
 void reldeleteCommand(client* c) {

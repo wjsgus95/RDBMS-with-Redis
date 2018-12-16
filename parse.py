@@ -447,6 +447,7 @@ if __name__ == "__main__":
     print(parse_insert(insert_query1))
     print(parse_insert(insert_query2))
     print(parse_delete(delete_query))
+    print(parse_update(update_query))
 
     insert_query = 'insert into student values(20123123, "student1" );'
     print(parse_insert(insert_query))

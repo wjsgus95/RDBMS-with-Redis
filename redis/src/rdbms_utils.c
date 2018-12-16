@@ -350,7 +350,8 @@ void set_unit_op(char* str, robj* tableObj, int idx){
     float val1, val2;
     int retval;
     int n_digits;
-    char** row = (char ***) tableObj + idx;
+    //char** row = (char ***) tableObj + idx;
+    char** row = tableObj->table[idx];
     // get target column idx
     while(str[header] != '#' && str[header] != '\"'){
         header++;
@@ -360,16 +361,19 @@ void set_unit_op(char* str, robj* tableObj, int idx){
     col_idx = get_col_idx(str1, tableObj->column, tableObj->column_length);
     free(str1);
     free(row[col_idx]);
+    fprintf("col %s with idx %d\n", str1, col_idx);
     if (str[header++] == '\"'){
         // assign rvalue
+        fprintf(stderr, "assign just the rval\n");
         start_header = header;
         while(str[header] != '\0'){
             header++;
         }
         str1 = (char*) calloc(1, header - start_header + 1);
-        memcpy(str1, str, header - start_header);
+        memcpy(str1, str+start_header, header - start_header);
+        fprintf(stderr, "rval: %s\n", str1);
         row[col_idx] = str1;
-        fprintf(stderr, "\" detected with str1=%s\n", str1);
+        fprintf(stderr, "set_unit_op ended\n");
         return;
     }
     else{
@@ -379,7 +383,7 @@ void set_unit_op(char* str, robj* tableObj, int idx){
             header++;
         }
         str1 = (char*) calloc(1, header - start_header + 1);
-        memcpy(str1, str, header - start_header);
+        memcpy(str1, str+start_header, header - start_header);
         // get operator
         op = str[header++];
         // get second operend
@@ -388,7 +392,7 @@ void set_unit_op(char* str, robj* tableObj, int idx){
             header++;
         }
         str2 = (char*) calloc(1, header - start_header + 1);
-        memcpy(str2, str, header - start_header);
+        memcpy(str2, str+start_header, header - start_header);
         // check whether they are columns
         col_idx2 = get_col_idx(str1, tableObj->column, tableObj->column_length);
         if (col_idx2 != -1)
@@ -430,10 +434,10 @@ void set_unit_op(char* str, robj* tableObj, int idx){
 void parse_set(char* str, robj* tableObj, int idx, int start_header){
     char* unit_op;
     int header = start_header;
+    fprintf(stderr, "parse_set init\n");
     while (str[header] != '\r' && str[header] != '\0'){
         header++;
     }
-    printf("given string: %s\n", str);
     if (start_header == header){
         return;
     }
@@ -443,6 +447,7 @@ void parse_set(char* str, robj* tableObj, int idx, int start_header){
     free(unit_op);
 
     if (str[header] == '\0'){
+        fprintf(stderr, "escape from parse_set\n");
         return;
     }
     else{
