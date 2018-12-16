@@ -1,4 +1,4 @@
-# v1.2
+# v1.3
 parse_create(statement)
     return dict(
         table: str(table name)
@@ -16,22 +16,22 @@ parse_select(statement)
     return dict(
         select: binary string (for count and sum, ':' is used)
         from: binary string (tables splitted by '\r')
-        where: binary string if exists (for conditional operations (ex. equal, like, ...), '#' is used) else None
+        where: binary string if exists (for conditional operations (ex. equal, like, ...), '#' is used) else empty string
                 seperate with '#' if column name follows, otherwise '"'
-        group_by: byte string if exists (simple column name b'column') else None
-        having: byte string if exists (encoded condition) else None
+        group_by: byte string if exists (simple column name b'column') else empty string
+        having: byte string if exists (encoded condition) else empty string
     )
 
 parse_update(statement)
     return dict(
         set: binary string (table name)
         update: binary string ('='->'#' when expr, '='->'\"' when DEFAULT, ','->'\r')
-        where: binary string if exists (for conditional operations (ex. equal, like, ...), '#' is used) else None
+        where: binary string if exists (for conditional operations (ex. equal, like, ...), '#' is used) else empty string
     )
 
 parse_delete(statement)
     return dict(
         from: binary string (table name)
-        where: binary string if exists (for conditional operations (ex. equal, like, ...), '#' is used) else None
+        where: binary string if exists (for conditional operations (ex. equal, like, ...), '#' is used) else empty string
     )
 

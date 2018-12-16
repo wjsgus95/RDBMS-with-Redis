@@ -68,7 +68,7 @@ class DataBase():
     '''
     def select(self):
         query = parse_select(self.statement)
-        result = self.redis.execute_command('relselect', query["from"], query['select'], query['where'])
+        result = self.redis.execute_command('relselect', query["from"], query['select'], query['where'], query['group_by'], query['having'])
         print(result)
         return
 

@@ -168,7 +168,7 @@ class DeleteParser:
             w = self.whereParser.encode()
             return {'from': f, 'where': w}
         except:
-            return {'from': f, 'where': None}
+            return {'from': f, 'where': ''}
 
 class UpdateParser:
     def __init__(self, statement):
@@ -210,7 +210,7 @@ class UpdateParser:
             w = self.whereParser.encode()
             return {'update': s, 'set': f, 'where': w}
         except:
-            return {'update': s, 'set': f, 'where': None}
+            return {'update': s, 'set': f, 'where': ''}
 
 
 
@@ -291,8 +291,8 @@ class SelectParser:
                 if self.h_idx != None:
                     h = self.havingParser.encode()
                     return {'select': s, 'from': f, 'where': w, 'group_by': self.splitted[self.g_idx].encode(), 'having': h}
-                return {'select': s, 'from': f, 'where': None, 'group_by': self.splitted[self.g_idx].encode()}
-            return {'select': s, 'from': f, 'where': None}
+                return {'select': s, 'from': f, 'where': '', 'group_by': self.splitted[self.g_idx].encode()}
+            return {'select': s, 'from': f, 'where': ''}
 
 class WhereParser:
     def __init__(self, statement):
@@ -311,6 +311,8 @@ class WhereParser:
 
         if statement != '':
             self.token_list = self.split_where_clause_to_list(statement)
+        else:
+            self.token_list = ''
 
 
     def uncapitalize_keywords(self, token_list):
@@ -400,6 +402,8 @@ class WhereParser:
         return parsed
 
     def encode(self):
+        if self.token_list == '':
+            return ''
         encoded =  self.inorder_tuple_traversal(self.parse()).replace('\'', '').replace('\"', '').replace('$', '\"')
 
         return encoded.encode('ascii')
@@ -452,6 +456,8 @@ if __name__ == "__main__":
     insert_query = 'insert into student values(20123123, "student1" );'
     print(parse_insert(insert_query))
     select_query = 'select name from student where (id < 30000000 and name = "wilson") or (id > 40000000 and name = "fredrick") group by name having count(id) > 1000'
+    print(parse_select(select_query))
+    select_query = 'select name from student group by name having count(name) > 1'
     print(parse_select(select_query))
     #import ipdb; ipdb.set_trace()
 
