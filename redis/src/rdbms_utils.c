@@ -359,6 +359,7 @@ void set_unit_op(char* str, robj* tableObj, int idx){
     memcpy(str1, str, header);
     col_idx = get_col_idx(str1, tableObj->column, tableObj->column_length);
     free(str1);
+    free(row[col_idx]);
     if (str[header++] == '\"'){
         // assign rvalue
         start_header = header;
@@ -367,8 +368,8 @@ void set_unit_op(char* str, robj* tableObj, int idx){
         }
         str1 = (char*) calloc(1, header - start_header + 1);
         memcpy(str1, str, header - start_header);
-        free(row[col_idx]);
         row[col_idx] = str1;
+        fprintf(stderr, "\" detected with str1=%s\n", str1);
         return;
     }
     else{
@@ -432,6 +433,7 @@ void parse_set(char* str, robj* tableObj, int idx, int start_header){
     while (str[header] != '\r' && str[header] != '\0'){
         header++;
     }
+    printf("given string: %s\n", str);
     if (start_header == header){
         return;
     }
