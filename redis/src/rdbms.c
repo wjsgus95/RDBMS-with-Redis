@@ -139,6 +139,8 @@ void relupdateCommand(client* c) {
         }
     }
     fprintf(stderr, "escaped from main for loop\n");
+    addReplyMultiBulkLen(c, 1);
+    addReplyBulkCBuffer(c, "OK", sizeof("OK")-1);
     return;
 }
 
