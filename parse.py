@@ -153,6 +153,7 @@ class DeleteParser:
         statement = remove_extra_blanks(statement)
         self.statement = statement
         self.splitted = statement.split(' ')
+        self.f_end = None
         for i, t in enumerate(self.splitted):
             if t.lower() == 'from':
                 self.f_start = i+1
@@ -461,3 +462,5 @@ if __name__ == "__main__":
     print(parse_select(select_query))
     #import ipdb; ipdb.set_trace()
 
+    query = 'update student set id = 4000, name = "wilson2" where name = "wilson"'
+    print(parse_update(query))

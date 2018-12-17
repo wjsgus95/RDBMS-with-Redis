@@ -449,7 +449,7 @@ void parse_set(char* str, robj* tableObj, int idx, int start_header){
         return;
     }
     unit_op = (char*) calloc(1, header - start_header + 1);
-    memcpy(unit_op, str, header-start_header);
+    memcpy(unit_op, str+start_header, header-start_header);
     set_unit_op(unit_op, tableObj, idx);
     free(unit_op);
 
@@ -458,6 +458,7 @@ void parse_set(char* str, robj* tableObj, int idx, int start_header){
         return;
     }
     else{
+        header++;
         parse_set(str, tableObj, idx, header);
     }
 

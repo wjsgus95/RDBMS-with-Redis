@@ -57,8 +57,10 @@ class DataBase():
     '''
     def select(self):
         query = parse_select(self.statement)
-        print(query)
         result = self.redis.execute_command('relselect', query["from"], query['select'], query['where'], query['group_by'], query['having'])
+        if type(result[0]) == bytes:
+            print(result[0].decode())
+            return
         num_col, result = result[0], result[1:]
         num_row = int(len(result) / num_col)
         for i in range(num_row):
@@ -77,8 +79,8 @@ class DataBase():
 
     def update(self):
         query = parse_update(self.statement)
-        result = self.redis.execute_command("relupdate", query["set"], query["update"], query["where"])
-        print(result)
+        result = self.redis.execute_command("relupdate", query["update"], query["set"], query["where"])
+        print(result[0].decode())
         return
 
     def run_query(self):

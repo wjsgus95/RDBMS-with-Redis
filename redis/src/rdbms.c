@@ -129,8 +129,8 @@ void relcreateCommand(client* c) {
 
 void relupdateCommand(client* c) {
     robj* tableObj = lookupKeyRead(c->db, c->argv[1]);
-    const char* set = c->argv[2]->ptr;
-    const char* cond = c->argv[3]->ptr;
+    char* set = c->argv[2]->ptr;
+    char* cond = c->argv[3]->ptr;
 
     for(int i = 0; i < tableObj->length; i++) {
         fprintf(stderr, "main for loop for update command\n");
@@ -147,6 +147,26 @@ void relupdateCommand(client* c) {
 void reldeleteCommand(client* c) {
     robj* tableObj = lookupKeyRead(c->db, c->argv[1]);
     const char* cond = c->argc > 2 ? c->argv[2]->ptr : NULL;
+
+    if(*cond == NULL) {
+        tableObj->max_length = 4;
+
+        for(int i = 0; i < tableObj->length; i++) {
+            for(int j = 0; j < tableObj->column_length; j++) {
+                free(tableObj->table[i][j]);
+            }
+            free(tableObj->table[i]);
+        }
+
+        free(tableObj->table);
+        tableObj->table = calloc(tableObj->column_length, sizeof(char**)*tableObj->max_length);
+        tableObj->length = 0;
+
+        addReplyMultiBulkLen(c, 1);
+        addReplyBulkCBuffer(c, "OK", sizeof("OK")-1);
+        return;
+    }
+
     int *row_mark = calloc(1, (tableObj->length) * sizeof(int));
     unsigned int new_size = tableObj->length;
 
@@ -190,6 +210,13 @@ void reldeleteCommand(client* c) {
 
 void relselectCommand(client* c) {
     robj* tableObj = lookupKeyRead(c->db, c->argv[1]);
+
+    if(tableObj->length == 0) {
+        addReplyMultiBulkLen(c, 1);
+        addReplyBulkCBuffer(c, "Empty", sizeof("Empty")-1);
+        return;
+    }
+
     void *replylen = addDeferredMultiBulkLength(c);
 
     char* table_column_argv[100];

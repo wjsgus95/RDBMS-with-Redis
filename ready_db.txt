@@ -1,6 +1,6 @@
 yes
 create table student (id int, name varchar);
-create table teacher (id int, dept varchar);
+create table teacher (id int, name varchar, dept varchar);
 
 insert into student values(20123123, "student1" );
 insert into student values(20123193, "student2" );
@@ -12,10 +12,13 @@ insert into student values(13131312, "dean");
 insert into student values(32323233, "owen");
 insert into student values(12345673, "wilson");
 
-insert into student values(32832223, "teacher1" );
-insert into student values(32322311, "teacher1" );
-insert into student values(32325311, "teacher1" );
-insert into student values(32329311, "teacher1" );
+insert into teacher values(32832223, "wilson", "physics" );
+insert into teacher values(32322311, "lamar", "compiler" );
+insert into teacher values(32325311, "green", "operating system" );
+insert into teacher values(32329311, "david", "database" );
+insert into teacher values(1000, "thousand1", "dept1" );
+insert into teacher values(1000, "thousand2", "dept2" );
+insert into teacher values(1000, "thousand3", "dept3" );
 
 select name from student where (id < 30000000 and name = "wilson") or (id > 40000000 and name = "fredrick");
 select name from student where id > 10 group by name;
@@ -23,3 +26,12 @@ select name from student where id > 10 and name = "vincent" group by name;
 select * from student;
 select id from student group by name;
 select name, count(id) from student where id > 3000000;
+
+update student set id = 4000, name = "wilson2" where name = "wilson"
+select * from student;
+
+delete from teacher;
+select * from teacher;
+update teacher set id = 2000 where id = 1000
+select * from teacher;
+select * from teacher where (name like 'thousand_') and ((id < 3000) or (name = "green")) group by id;
