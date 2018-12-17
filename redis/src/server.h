@@ -613,8 +613,6 @@ typedef struct redisObject {
     char** col_type;
     size_t length;
     size_t max_length;
-    size_t group_length;
-    size_t group_max_length;
     size_t column_length;
     void *ptr;
 } robj;
