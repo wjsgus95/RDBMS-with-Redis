@@ -39,28 +39,28 @@ void relinsertCommand(client* c) {
     void *replylen = addDeferredMultiBulkLength(c);
     unsigned long numret = 0;
 
-    // Note to use calloc because empty values should hold NULL pointers
+    // Note to use je_calloc because empty values should hold NULL pointers
     if(need_expand(tableObj)) {
         tableObj->max_length <<= 1;
-        char*** migrate_table = calloc(tableObj->max_length, sizeof(sds***));
+        char*** migrate_table = je_calloc(tableObj->max_length, sizeof(sds***));
 
         if(tableObj->table != NULL) {
             memcpy(migrate_table, tableObj->table, sizeof(sds**)*tableObj->length);
             void* temp = tableObj->table;
             tableObj->table = migrate_table;
-            free(temp);
+            je_free(temp);
         } else {
             tableObj->table = migrate_table;
         }
     }
 
-    tableObj->table[tableObj->length] = calloc(1, tableObj->column_length * sizeof(char*));
+    tableObj->table[tableObj->length] = je_calloc(1, tableObj->column_length * sizeof(char*));
 
     // Note: argc not necessarily all values to be inserted (could be "column name\rcolumn value")
     if((((char*)c->argv[2]->ptr)[0]) == '\r') {
         for(int i = 2; i < c->argc; i++) {
             const size_t iter = 1;
-            tableObj->table[tableObj->length][i-2] = calloc(1, strlen(c->argv[i]->ptr)-iter);
+            tableObj->table[tableObj->length][i-2] = je_calloc(1, strlen(c->argv[i]->ptr)-iter);
             memcpy(tableObj->table[tableObj->length][i-2], (((char*)c->argv[i]->ptr)+iter), strlen(c->argv[i]->ptr)-iter);
         }
     } else {
@@ -75,7 +75,7 @@ void relinsertCommand(client* c) {
                 }
                 if((((char *)c->argv[i]->ptr)+iter)[0] != '\r') continue;
                 iter++;
-                tableObj->table[tableObj->length][j] = calloc(1, sdslen(c->argv[i]->ptr)-iter);
+                tableObj->table[tableObj->length][j] = je_calloc(1, sdslen(c->argv[i]->ptr)-iter);
                 memcpy(tableObj->table[tableObj->length][j], (((char*)c->argv[i]->ptr)+iter), sdslen(c->argv[i]->ptr)-iter);
             }
         }
@@ -85,7 +85,7 @@ void relinsertCommand(client* c) {
         if(tableObj->table[tableObj->length][i] != NULL) {
             addReplyBulkCBuffer(c, tableObj->table[tableObj->length][i], strlen(tableObj->table[tableObj->length][i]));
         } else {
-            tableObj->table[tableObj->length][i] = calloc(1, sizeof("null"));
+            tableObj->table[tableObj->length][i] = je_calloc(1, sizeof("null"));
             memcpy(tableObj->table[tableObj->length][i], "null", sizeof("null"));
             addReplyBulkCBuffer(c, "null", sizeof("null")-1);
         }
@@ -99,14 +99,14 @@ void relinsertCommand(client* c) {
 void relcreateCommand(client* c) {
     //robj *arg_table = c->argv[1];
     //arg_table = getDecodedObject(arg_table);
-    //sds* table = malloc(1, sdslen(arg_table));
+    //sds* table = je_malloc(1, sdslen(arg_table));
 
-    //robj* tableObj = calloc(1, sizeof(robj));
+    //robj* tableObj = je_calloc(1, sizeof(robj));
     robj* tableObj = createRawStringObject(c->argv[1]->ptr, sdslen(c->argv[1]->ptr));
     tableObj->max_length = 4;
     tableObj->column_length = (c->argc - 2)/2;
-    tableObj->column = calloc(1, ((c->argc-2)/2)*sizeof(char*));
-    tableObj->col_type = calloc(1, ((c->argc-2)/2)*sizeof(char*));
+    tableObj->column = je_calloc(1, ((c->argc-2)/2)*sizeof(char*));
+    tableObj->col_type = je_calloc(1, ((c->argc-2)/2)*sizeof(char*));
 
     for(int i = 2; i <= (c->argc)/2; i++) {
         robj *arg_column = c->argv[i];
@@ -119,7 +119,7 @@ void relcreateCommand(client* c) {
         tableObj->col_type[i-((c->argc)/2+1)] = arg_col_type->ptr;
     }
 
-    tableObj->table = calloc(tableObj->column_length, sizeof(char**)*tableObj->max_length);
+    tableObj->table = je_calloc(tableObj->column_length, sizeof(char**)*tableObj->max_length);
     // c->argv[1] copied in dictAddRaw, decrease reference to arg_table (if ref == 0 then freed)
     setKey(c->db, c->argv[1], tableObj);
 
@@ -153,13 +153,13 @@ void reldeleteCommand(client* c) {
 
         for(int i = 0; i < tableObj->length; i++) {
             for(int j = 0; j < tableObj->column_length; j++) {
-                free(tableObj->table[i][j]);
+                je_free(tableObj->table[i][j]);
             }
-            free(tableObj->table[i]);
+            je_free(tableObj->table[i]);
         }
 
-        free(tableObj->table);
-        tableObj->table = calloc(tableObj->column_length, sizeof(char**)*tableObj->max_length);
+        je_free(tableObj->table);
+        tableObj->table = je_calloc(tableObj->column_length, sizeof(char**)*tableObj->max_length);
         tableObj->length = 0;
 
         addReplyMultiBulkLen(c, 1);
@@ -167,15 +167,15 @@ void reldeleteCommand(client* c) {
         return;
     }
 
-    int *row_mark = calloc(1, (tableObj->length) * sizeof(int));
+    int *row_mark = je_calloc(1, (tableObj->length) * sizeof(int));
     unsigned int new_size = tableObj->length;
 
     for(int i = 0; i < tableObj->length; i++) {
         if(parse_where(cond, strlen(cond), tableObj, NULL, i, 0)) {
             for(int j = 0; j < tableObj->column_length; j++) {
-                free(tableObj->table[i][j]);
+                je_free(tableObj->table[i][j]);
             }
-            free(tableObj->table[i]);
+            je_free(tableObj->table[i]);
             new_size--;
             row_mark[i] = 1;
         }
@@ -188,7 +188,7 @@ void reldeleteCommand(client* c) {
     } while(new_size_round_up < new_size);
 
     char ***temp = tableObj->table;
-    tableObj->table = calloc(new_size_round_up, sizeof(char**));
+    tableObj->table = je_calloc(new_size_round_up, sizeof(char**));
     tableObj->max_length = new_size_round_up;
 
     unsigned int iter = 0;
@@ -200,8 +200,8 @@ void reldeleteCommand(client* c) {
         }
     }
     tableObj->length = iter;
-    free(temp);
-    free(row_mark);
+    je_free(temp);
+    je_free(row_mark);
             
     addReplyMultiBulkLen(c, 1);
     addReplyBulkCBuffer(c, "OK", sizeof("OK")-1);
@@ -263,7 +263,7 @@ void relselectCommand(client* c) {
         if((*(having_clause+1) == 'c' && *(having_clause+2) == ':') ||
                 (*(having_clause+2) == 'c' && *(having_clause+3) == ':')) {
             is_having_count = 1;
-            char* col = calloc(100, sizeof(char));
+            char* col = je_calloc(100, sizeof(char));
             size_t len = 0;
             while(*(having_clause+len) != '#' && *(having_clause+len) != '"')
                 len++;
@@ -308,7 +308,7 @@ void relselectCommand(client* c) {
             past_iter = iter += 1;
         }
         if(*iter == '\r') {
-            table_column_argv[table_column_argc] = (char*)calloc(current_size, sizeof(char));
+            table_column_argv[table_column_argc] = (char*)je_calloc(current_size, sizeof(char));
             // Note: Non-NULL terminated
             memcpy(table_column_argv[table_column_argc], past_iter, current_size);
             a2i[table_column_argc] = get_col_index(tableObj, table_column_argv[table_column_argc]);
@@ -322,7 +322,7 @@ void relselectCommand(client* c) {
         current_size++;
     }
 
-    table_column_argv[table_column_argc] = (char*)calloc(current_size, sizeof(char));
+    table_column_argv[table_column_argc] = (char*)je_calloc(current_size, sizeof(char));
 
     // Note: Non-NULL terminated
     memcpy(table_column_argv[table_column_argc], past_iter, current_size);
@@ -426,7 +426,7 @@ void relselectCommand(client* c) {
     }
 
     for(int i = 0; i < table_column_argc; i++) {
-        free(table_column_argv[i]);
+        je_free(table_column_argv[i]);
     }
 
     decrRefCount(columns);

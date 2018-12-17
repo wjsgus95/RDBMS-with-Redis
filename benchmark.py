@@ -2,6 +2,7 @@ import redis
 import subprocess
 from time import *
 from rediscluster import StrictRedisCluster
+import random
 
 local = '127.0.0.1'
 redis_dir = 'redis'
@@ -47,7 +48,7 @@ def linked_list_insertion():
 def our_approach():
     r.execute_command('relcreate', 'student', 'id', 'name', 'int', 'varchar')
     for i in range(N):
-        r.execute_command('relinsert', 'student', '\r1232121', '\rjason')
+        r.execute_command('relinsert', 'student', f'\r{round(random.random(),7)}', '\rjason')
     #print(r.execute_command('relselect', 'student', ':id\r:name'))
 
 def set_insertion():
