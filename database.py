@@ -57,6 +57,7 @@ class DataBase():
     '''
     def select(self):
         query = parse_select(self.statement)
+        print(query)
         result = self.redis.execute_command('relselect', query["from"], query['select'], query['where'], query['group_by'], query['having'])
         if type(result[0]) == bytes:
             print(result[0].decode())

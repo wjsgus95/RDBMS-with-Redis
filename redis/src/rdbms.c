@@ -400,7 +400,13 @@ void relselectCommand(client* c) {
                             if(group_target_idx >= 0) {
                                 if((is_having_sum && having_op(having_clause, h_sum, having_literal)) ||
                                         (is_having_count && having_op(having_clause, h_count, having_literal))) {
-                                    addReplyBulkCBuffer(c, tableObj->table[i][a2i[j]], strlen(tableObj->table[i][a2i[j]]));
+                                    if(table_is_sum[j])
+                                        addReplyLongLong(c, sum[j]);
+                                    else if(table_is_count[j])
+                                        addReplyLongLong(c, count[j]);
+                                    else
+                                        addReplyBulkCBuffer(c, tableObj->table[i][a2i[j]], strlen(tableObj->table[i][a2i[j]]));
+                                    sum[j] = count[j] = 0;
                                     numret++;
                                 }
                             }
@@ -412,6 +418,9 @@ void relselectCommand(client* c) {
             if(is_distinct) {
                 group_distinct_iter = tableObj->table[(i+1)%(tableObj->length)][group_target_idx];
                 h_sum = h_count = 0;
+                for(int j = 0; j < table_column_argc; j++) {
+                    sum[j] = count[j] = 0;
+                }
             }
         }
     }

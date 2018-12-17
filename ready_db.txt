@@ -7,6 +7,8 @@ insert into student values(20123193, "student2" );
 insert into student values(20132821, "student3");
 insert into student values(20132323, "student4" );
 insert into student values(40404040, "fredrick");
+insert into student values(40404040, "fredrick");
+insert into student values(34343430, "vincent");
 insert into student values(34343430, "vincent");
 insert into student values(13131312, "dean");
 insert into student values(32323233, "owen");
@@ -20,6 +22,7 @@ insert into teacher values(1000, "thousand1", "dept1" );
 insert into teacher values(1000, "thousand2", "dept2" );
 insert into teacher values(1000, "thousand3", "dept3" );
 
+select count(id) from student group by name having count(id) > 1
 select name from student where (id < 30000000 and name = "wilson") or (id > 40000000 and name = "fredrick");
 select name from student where id > 10 group by name;
 select name from student where id > 10 and name = "vincent" group by name;
@@ -35,3 +38,5 @@ select * from teacher;
 update teacher set id = 2000 where id = 1000
 select * from teacher;
 select * from teacher where (name like 'thousand_') and ((id < 3000) or (name = "green")) group by id;
+
+select * from student;
