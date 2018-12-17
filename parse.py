@@ -238,6 +238,7 @@ class SelectParser:
             elif t.lower() == 'where':
                 self.f_end = i
                 self.w_start = i+1
+                self.whereParser = WhereParser(' '.join(self.splitted[self.w_start:self.w_end]))
             # Note: where clause always precedes group by clause
             elif t.lower() == 'group' and self.splitted[i+1].lower() == 'by':
                 self.w_end = i
@@ -278,21 +279,20 @@ class SelectParser:
             s = ':*'
         s = s.encode('ascii')
         f = ' '.join(self.splitted[self.f_start:self.f_end]).replace(' ', '').replace(',', '\r').encode('ascii')
+        g, h = '', ''
         try:
             w = self.whereParser.encode()
             if self.g_idx != None:
+                g = self.splitted[self.g_idx].encode()
                 if self.h_idx != None:
                     h = self.havingParser.encode()
-                    return {'select': s, 'from': f, 'where': w, 'group_by': self.splitted[self.g_idx].encode(), 'having': h}
-                return {'select': s, 'from': f, 'where': w, 'group_by': self.splitted[self.g_idx].encode()}
-            return {'select': s, 'from': f, 'where': w}
+            return {'select': s, 'from': f, 'where': w, 'group_by': g , 'having': h}
         except:
             if self.g_idx != None:
+                g = self.splitted[self.g_idx].encode()
                 if self.h_idx != None:
                     h = self.havingParser.encode()
-                    return {'select': s, 'from': f, 'where': w, 'group_by': self.splitted[self.g_idx].encode(), 'having': h}
-                return {'select': s, 'from': f, 'where': '', 'group_by': self.splitted[self.g_idx].encode()}
-            return {'select': s, 'from': f, 'where': ''}
+            return {'select': s, 'from': f, 'where': '', 'group_by': g, 'having': h}
 
 class WhereParser:
     def __init__(self, statement):

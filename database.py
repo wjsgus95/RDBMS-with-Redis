@@ -31,17 +31,6 @@ class DataBase():
     '''
     def create(self):
         query = parse_create(self.statement)
-
-        #if self.redis.sismember('table', query['table']):
-        #    # error message (tentative)
-        #    print("table already exists")
-        #    return
-
-        #self.redis.hmset(f'{query["table"]}:0', query['col_dict')
-        #self.redis.sadd('table', query['table'])
-
-        #self.show()
-        #return
         self.redis.execute_command('relcreate', query["table"], *query['col_name'], *query['col_type'])
         self.show()
         return
@@ -68,18 +57,28 @@ class DataBase():
     '''
     def select(self):
         query = parse_select(self.statement)
+        print(query)
         result = self.redis.execute_command('relselect', query["from"], query['select'], query['where'], query['group_by'], query['having'])
-        print(result)
+        num_col, result = result[0], result[1:]
+        num_row = int(len(result) / num_col)
+        for i in range(num_row):
+            for j in range(num_col):
+                if type(result[i*num_col+j]) != bytes:
+                    result[i*num_col+j] = str(result[i*num_col+j]).encode()
+                print(result[i*num_col+j].decode().ljust(15), end = '')
+            print()
         return
 
     def delete(self):
         query = parse_delete(self.statement)
-
+        result = self.redis.execute_command("reldelete", query["from"], query["where"])
+        print(result)
         return
 
     def update(self):
         query = parse_update(self.statement)
-
+        result = self.redis.execute_command("relupdate", query["set"], query["update"], query["where"])
+        print(result)
         return
 
     def run_query(self):

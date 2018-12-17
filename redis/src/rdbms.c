@@ -206,14 +206,28 @@ void relselectCommand(client* c) {
     int global_is_count = 0;
 
     int group_count = 0;
-    // Note: c->argc > 4 iff group by is given
+
+    char *where_clause = c->argc > 3 ? c->argv[3]->ptr : NULL;
+    if(c->argc > 3) {
+        if(*(char*)(where_clause) == NULL)
+            where_clause = NULL;
+    }
+
     char *group_target = c->argc > 4 ? c->argv[4]->ptr : NULL;
+    if(c->argc > 5) {
+        if(*(char*)(c->argv[4]->ptr) == NULL)
+            group_target = NULL;
+    }
     int group_target_idx = -1;
     if(group_target != NULL) {
         group_target_idx = get_col_index(tableObj, group_target);
     }
 
     char *having_clause = c->argc > 5 ? c->argv[5]->ptr : NULL;
+    if(c->argc > 5) {
+        if(*(char*)(c->argv[5]->ptr) == NULL)
+            having_clause = NULL;
+    }
     int having_literal = -1;
     int is_having_count = 0, is_having_sum = 0;
     int having_col_idx = -1;
@@ -297,22 +311,13 @@ void relselectCommand(client* c) {
         char *group_distinct_iter = tableObj->table[0][group_target_idx];
 
         addReplyLongLong(c, tableObj->column_length); numret++;
-        //for(int i = 0; i < tableObj->column_length; i++) {
-        //    for(int j = 0; j < tableObj->length; j++) {
-        //        if((c->argc > 3 && parse_where(c->argv[3]->ptr, strlen(c->argv[3]->ptr), tableObj, NULL, j, 0)) ||
-        //                c->argc <= 3) {
-        //            addReplyBulkCBuffer(c, tableObj->table[j][i], strlen(tableObj->table[j][i]));
-        //            numret++;
-        //        }
-        //    }
-        //}
         for(int i = 0; i < tableObj->length; i++) {
             int is_distinct = 0;
             if(group_target_idx >= 0 && strcmp(group_distinct_iter, tableObj->table[(i+1)%(tableObj->length)][group_target_idx]) != 0) 
                 is_distinct = 1;
                 
-            if((c->argc > 3 && parse_where(c->argv[3]->ptr, strlen(c->argv[3]->ptr), tableObj, NULL, i, 0)) ||
-                    c->argc <= 3) {
+            if((where_clause != NULL && parse_where(where_clause, strlen(where_clause), tableObj, NULL, i, 0)) ||
+                    where_clause == NULL) {
                 for(int j = 0; j < tableObj->column_length; j++) {
                     if((group_target_idx >= 0 && is_distinct) || group_target_idx < 0) {
                         addReplyBulkCBuffer(c, tableObj->table[i][j], strlen(tableObj->table[i][j]));
@@ -341,8 +346,8 @@ void relselectCommand(client* c) {
             if(group_target_idx >= 0 && strcmp(group_distinct_iter, tableObj->table[(i+1)%(tableObj->length)][group_target_idx]) != 0) 
                 is_distinct = 1;
                 
-            if((c->argc > 3 && parse_where(c->argv[3]->ptr, strlen(c->argv[3]->ptr), tableObj, NULL, i, 0)) ||
-                    c->argc <= 3) {
+            if((where_clause != NULL && parse_where(where_clause, strlen(where_clause), tableObj, NULL, i, 0)) ||
+                    where_clause == NULL) {
                 for(int j = 0; j < table_column_argc; j++) {
                     if(table_is_sum[j]) sum[j] += atoi(tableObj->table[i][a2i[j]]);
                     if(table_is_count[j]) count[j]++;
@@ -360,6 +365,7 @@ void relselectCommand(client* c) {
                                 addReplyLongLong(c, count[j]);
                             else
                                 addReplyBulkCBuffer(c, tableObj->table[i][a2i[j]], strlen(tableObj->table[i][a2i[j]]));
+                            fprintf(stderr, tableObj->table[i][a2i[j]]);
                             numret++;
                             sum[j] = count[j] = 0;
                         }

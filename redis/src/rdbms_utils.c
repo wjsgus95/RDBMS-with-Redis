@@ -35,12 +35,13 @@ void quicksort_by_column(char*** table, size_t len, int idx) {
     quicksort_by_column(table+pvt, len - pvt, idx);
 }
 
-int get_col_index(robj* table, char* colname){
+int get_col_index(robj* tableObj, char* colname){
     // linear search
     int i = 0;
+    char*** table = tableObj->table;
     if(*colname == NULL) return -1;
-    for(; i < table->length; ++i){
-        if (strcmp(colname, table->column[i])== 0){
+    for(; i < tableObj->length; ++i){
+        if (strcmp(colname, tableObj->column[i])== 0){
             return i;
         }
     }
