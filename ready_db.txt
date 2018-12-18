@@ -40,3 +40,5 @@ select * from teacher where (name like 'thousand_') and ((id < 3000) or (name = 
 select name from teacher where (name like 'f%') and ((id < 3000) or (name = "green")) group by id;
 
 select * from student;
+
+select count(id), name from student;

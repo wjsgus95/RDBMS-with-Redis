@@ -387,13 +387,15 @@ void relselectCommand(client* c) {
 
                     if((group_target_idx >= 0 && is_distinct) || group_target_idx < 0) {
                         if(having_clause == NULL) {
-                            if(table_is_sum[j])
+                            if(group_target_idx < 0 && i != tableObj->length - 1)
+                                continue;
+                            if(table_is_sum[j]) {
                                 addReplyLongLong(c, sum[j]);
-                            else if(table_is_count[j])
+                            } else if(table_is_count[j]) {
                                 addReplyLongLong(c, count[j]);
-                            else
+                            } else {
                                 addReplyBulkCBuffer(c, tableObj->table[i][a2i[j]], strlen(tableObj->table[i][a2i[j]]));
-                            fprintf(stderr, tableObj->table[i][a2i[j]]);
+                            } fprintf(stderr, tableObj->table[i][a2i[j]]);
                             numret++;
                             sum[j] = count[j] = 0;
                         }
