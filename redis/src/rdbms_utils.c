@@ -346,13 +346,19 @@ void set_unit_op(char* str, robj* tableObj, int idx){
     int col_idx, col_idx2;
     int header = 0;
     int start_header;
-    char* str1, str2;
+    char* str1;
+    char* str2;
     char op;
-    float val1, val2;
+    double val1, val2;
     int retval;
     int n_digits;
+    int i;
     //char** row = (char ***) tableObj + idx;
     char** row = tableObj->table[idx];
+    for(i=0; i<tableObj->column_length; i++){
+        fprintf(stderr, "row[%d] = %s ", i, row[i]);
+    }
+    fprintf(stderr, "\n");
     // get target column idx
     while(str[header] != '#' && str[header] != '\"'){
         header++;
@@ -361,7 +367,6 @@ void set_unit_op(char* str, robj* tableObj, int idx){
     memcpy(str1, str, header);
     col_idx = get_col_idx(str1, tableObj->column, tableObj->column_length);
     je_free(str1);
-    je_free(row[col_idx]);
     fprintf("col %s with idx %d\n", str1, col_idx);
     if (str[header++] == '\"'){
         // assign rvalue
@@ -373,6 +378,7 @@ void set_unit_op(char* str, robj* tableObj, int idx){
         str1 = (char*) je_calloc(1, header - start_header + 1);
         memcpy(str1, str+start_header, header - start_header);
         fprintf(stderr, "rval: %s\n", str1);
+        je_free(row[col_idx]);
         row[col_idx] = str1;
         fprintf(stderr, "set_unit_op ended\n");
         return;
@@ -398,22 +404,30 @@ void set_unit_op(char* str, robj* tableObj, int idx){
         }
         fprintf(stderr, "header=%d, start_header=%d\n", header, start_header);
         str2 = (char*) je_calloc(1, header - start_header + 1);
-        memcpy(str2, str+start_header, header - start_header);
+        memcpy(str2, &str[start_header], header - start_header);
+        /*
+        for(i=start_header; i<header; i++){
+            str2[i-start_header] = str[i];
+        }
+        */
         fprintf(stderr, "second operend %s\n", str2);
         // check whether they are columns
         col_idx2 = get_col_idx(str1, tableObj->column, tableObj->column_length);
-        if (col_idx2 != -1)
-            val1 = (float) strtof(row[col_idx2], NULL);
+        if (col_idx2 != -1){
+            fprintf(stderr, "row[%d] = %s\n", col_idx2, row[col_idx2]);
+            val1 = strtod(row[col_idx2], NULL);
+        }
         else
-            val1 = strtof(str1, NULL);
+            val1 = strtod(str1, NULL);
         col_idx2 = get_col_idx(str2, tableObj->column, tableObj->column_length);
         if (col_idx2 != -1)
-            val2 = (float) strtof(row[col_idx2], NULL);
+            val2 = strtod(row[col_idx2], NULL);
         else
-            val2 = strtof(str2, NULL);
+            val2 = strtod(str2, NULL);
         je_free(str1);
         je_free(str2);
         // obtain result
+        fprintf(stderr, "val1 = %.1f, val2 = %.1f\n", val1, val2);
         switch(op){
             case '+':
                 val1 += val2;
@@ -430,9 +444,11 @@ void set_unit_op(char* str, robj* tableObj, int idx){
         }
         // save the result
         retval = (int) val1;
+        fprintf(stderr, "retval = %d\n", retval);
         n_digits = (int)((ceil(log10(retval))+1)*sizeof(char));
         str1 = (char*) je_calloc(1, n_digits);
-        sprintf(str1, "%d", n_digits);
+        sprintf(str1, "%d", retval);
+        je_free(row[col_idx]);
         row[col_idx] = str1;
         return;
     }
