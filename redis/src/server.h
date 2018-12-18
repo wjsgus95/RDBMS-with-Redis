@@ -608,7 +608,6 @@ typedef struct redisObject {
                             * and most significant 16 bits access time). */
     int refcount;
     char*** table;
-    char*** groups;
     char** column;
     char** col_type;
     size_t length;

@@ -2,11 +2,11 @@ yes
 create table student (id int, name varchar);
 create table teacher (id int, name varchar, dept varchar);
 
+insert into student values(40404040, "fredrick");
 insert into student values(20123123, "student1" );
 insert into student values(20123193, "student2" );
 insert into student values(20132821, "student3");
 insert into student values(20132323, "student4" );
-insert into student values(40404040, "fredrick");
 insert into student values(40404040, "fredrick");
 insert into student values(34343430, "vincent");
 insert into student values(34343430, "vincent");
@@ -22,21 +22,6 @@ insert into teacher values(1000, "thousand1", "dept1" );
 insert into teacher values(1000, "thousand2", "dept2" );
 insert into teacher values(1000, "thousand3", "dept3" );
 
-select count(id) from student group by name having count(id) > 1
-select name from student where (id < 30000000 and name = "wilson") or (id > 40000000 and name = "fredrick");
-select name from student where id > 10 group by name;
-select name from student where id > 10 and name = "vincent" group by name;
-select * from student;
-select id from student group by name;
-select name, count(id) from student where id > 3000000;
-
-update student set id = 4000, name = "wilson2" where name = "wilson"
-select * from student;
-
+select * from student where (name like 'f_edri__') or (name = "vincent");
+update teacher set id = id + 100 where name like 'thousand_';
 select * from teacher;
-update teacher set id = 2000 where id = 1000
-select * from teacher;
-select * from teacher where (name like 'thousand_') and ((id < 3000) or (name = "green")) group by id;
-select name from teacher where (name like 'f%') and ((id < 3000) or (name = "green")) group by id;
-
-select * from student;

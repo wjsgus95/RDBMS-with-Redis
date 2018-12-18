@@ -57,13 +57,13 @@ class DataBase():
     '''
     def select(self):
         query = parse_select(self.statement)
-        print(query)
         result = self.redis.execute_command('relselect', query["from"], query['select'], query['where'], query['group_by'], query['having'])
         if type(result[0]) == bytes:
             print(result[0].decode())
             return
         num_col, result = result[0], result[1:]
         num_row = int(len(result) / num_col)
+
         for i in range(num_row):
             for j in range(num_col):
                 if type(result[i*num_col+j]) != bytes:

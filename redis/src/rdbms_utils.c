@@ -123,6 +123,31 @@ int greater_than(char* val1, char* val2, char* type){
     }
 }
 
+int like(char* regexp, char* text) {
+    char* val_iter = text;
+    char* re_iter  = regexp;
+
+    fprintf(stderr, "like func start\n");
+    fprintf(stderr, "%s\n", val_iter);
+    fprintf(stderr, "%s\n", regexp);
+
+    while(*val_iter != '\0' && *re_iter != '\0') {
+        if(*re_iter == '%') {
+            while(*(re_iter+1) == '%') re_iter++;
+            re_iter++;
+            while(*val_iter != *re_iter) val_iter++;
+        }
+        if(*re_iter != '_' && (*re_iter != *val_iter)) return 0;
+        //if(*re_iter != *val_iter) return 0;
+        re_iter++;
+        val_iter++;
+    }
+
+    if(*val_iter == '\0' && *re_iter == '\0') return 1;
+    else return 0;
+}
+
+/*
 int like(char* regexp, char* text){
     if (regexp[0] == '\0')
         return 1;
@@ -134,12 +159,14 @@ int like(char* regexp, char* text){
 }
 
 int like_star(char c, char* regexp, char* text){
+    char* iter = text;
     do {
-        if (like(regexp, text))
+        if (like(regexp, iter))
             return 1;
-    } while (*text != '\0' && (*text++ == c || c == '.'));
+    } while (*iter != '\0' && (*iter++ == c || c == '.'));
     return 0;
 }
+*/
 
 int get_col_idx(char* col_query, char** col, int n_cols){
     int i;
@@ -220,7 +247,7 @@ int parse_conditional_op(char* str, int* header_point){
         op_length++;
     }
     *header_point = *header_point + op_length;
-    op = (char*) je_calloc(1, op_length * sizeof(char));
+    op = (char*) calloc(1, op_length * sizeof(char));
     for (i=0; i<op_length; ++i){
         //op[i] = str[i];
         op[i] = str[*(header_point)-op_length+i];
@@ -229,11 +256,11 @@ int parse_conditional_op(char* str, int* header_point){
     // find where the operator exists
     for (i=0 ; i < 7 ; ++i){
         if (strcmp(op, conditional_operators[i]) == 0){
-            je_free(op);
+            free(op);
             return i;
         }
     }
-    je_free(op);
+    free(op);
     return -1;
 }
 
@@ -253,7 +280,7 @@ int parse_primary(char* str, int* header_point, size_t len, robj* tableObj1, rob
         length1++;
         *header_point = *header_point + 1;
     }
-    str1 = (char*) je_calloc(1, length1 + 1);
+    str1 = (char*) calloc(1, length1 + 1);
     memcpy(str1, (str+*(header_point))-length1, length1);
     op_type = str[*header_point];
     *header_point = *header_point + 1;
@@ -263,7 +290,7 @@ int parse_primary(char* str, int* header_point, size_t len, robj* tableObj1, rob
         length2++;
         *header_point = *header_point + 1;
     }
-    str2 = (char*) je_calloc(1, length2 + 1);
+    str2 = (char*) calloc(1, length2 + 1);
     memcpy(str2, (str+*(header_point))-length2, length2);
     *header_point = *header_point + 1;
 
@@ -271,8 +298,8 @@ int parse_primary(char* str, int* header_point, size_t len, robj* tableObj1, rob
     ret_val = run_unit_cond_op(op, str1, str2, op_type, tableObj1, tableObj2, idx1, idx2);
 
     // release memory
-    je_free(str1);
-    je_free(str2);
+    free(str1);
+    free(str2);
     return ret_val;
 }
 
@@ -335,9 +362,9 @@ int parse_where_recursive(char* str, int* header_point, size_t len, robj* tableO
 
 
 int parse_where(char* str, size_t len, robj* tableObj1, robj* tableObj2, int idx1, int idx2){
-    int* header_point = (int *) je_calloc(1, sizeof(int)); // pseudo global
+    int* header_point = (int *) calloc(1, sizeof(int)); // pseudo global
     int ret_val = parse_where_recursive(str, header_point, len, tableObj1, tableObj2, idx1, idx2);
-    je_free(header_point);
+    free(header_point);
     return ret_val;
 }
 
@@ -363,10 +390,10 @@ void set_unit_op(char* str, robj* tableObj, int idx){
     while(str[header] != '#' && str[header] != '\"'){
         header++;
     }
-    str1 = (char*) je_calloc(1, header + 1);
+    str1 = (char*) calloc(1, header + 1);
     memcpy(str1, str, header);
     col_idx = get_col_idx(str1, tableObj->column, tableObj->column_length);
-    je_free(str1);
+    free(str1);
     fprintf("col %s with idx %d\n", str1, col_idx);
     if (str[header++] == '\"'){
         // assign rvalue
@@ -375,10 +402,10 @@ void set_unit_op(char* str, robj* tableObj, int idx){
         while(str[header] != '\0'){
             header++;
         }
-        str1 = (char*) je_calloc(1, header - start_header + 1);
+        str1 = (char*) calloc(1, header - start_header + 1);
         memcpy(str1, str+start_header, header - start_header);
         fprintf(stderr, "rval: %s\n", str1);
-        je_free(row[col_idx]);
+        free(row[col_idx]);
         row[col_idx] = str1;
         fprintf(stderr, "set_unit_op ended\n");
         return;
@@ -389,7 +416,7 @@ void set_unit_op(char* str, robj* tableObj, int idx){
         while(str[header] != '+' && str[header] != '*' && str[header] != '-'){
             header++;
         }
-        str1 = (char*) je_calloc(1, header - start_header + 1);
+        str1 = (char*) calloc(1, header - start_header + 1);
         memcpy(str1, str+start_header, header - start_header);
         fprintf(stderr, "first operend %s\n", str1);
         // get operator
@@ -403,7 +430,7 @@ void set_unit_op(char* str, robj* tableObj, int idx){
             header++;
         }
         fprintf(stderr, "header=%d, start_header=%d\n", header, start_header);
-        str2 = (char*) je_calloc(1, header - start_header + 1);
+        str2 = (char*) calloc(1, header - start_header + 1);
         memcpy(str2, &str[start_header], header - start_header);
         /*
         for(i=start_header; i<header; i++){
@@ -424,8 +451,8 @@ void set_unit_op(char* str, robj* tableObj, int idx){
             val2 = strtod(row[col_idx2], NULL);
         else
             val2 = strtod(str2, NULL);
-        je_free(str1);
-        je_free(str2);
+        free(str1);
+        free(str2);
         // obtain result
         fprintf(stderr, "val1 = %.1f, val2 = %.1f\n", val1, val2);
         switch(op){
@@ -446,9 +473,9 @@ void set_unit_op(char* str, robj* tableObj, int idx){
         retval = (int) val1;
         fprintf(stderr, "retval = %d\n", retval);
         n_digits = (int)((ceil(log10(retval))+1)*sizeof(char));
-        str1 = (char*) je_calloc(1, n_digits);
+        str1 = (char*) calloc(1, n_digits);
         sprintf(str1, "%d", retval);
-        je_free(row[col_idx]);
+        free(row[col_idx]);
         row[col_idx] = str1;
         return;
     }
@@ -464,10 +491,10 @@ void parse_set(char* str, robj* tableObj, int idx, int start_header){
     if (start_header == header){
         return;
     }
-    unit_op = (char*) je_calloc(1, header - start_header + 1);
+    unit_op = (char*) calloc(1, header - start_header + 1);
     memcpy(unit_op, str+start_header, header-start_header);
     set_unit_op(unit_op, tableObj, idx);
-    je_free(unit_op);
+    free(unit_op);
 
     if (str[header] == '\0'){
         fprintf(stderr, "escape from parse_set\n");
