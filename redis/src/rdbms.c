@@ -3,8 +3,8 @@
 #define need_expand(x) ((((x)->length >= (x)->max_length)))
 #define group_need_expand(x) ((((x)->group_length >= (x)->group_max_length)))
 
-int having_op(char*, long long, int);
-int get_having_literal(char*);
+int having_op(char*, long long, long long);
+long long get_having_literal(char*);
 
 // not using this for now, incompatible with redis-cluster-py, use KEYS command instead
 void relshowCommand(client* c) {
@@ -262,7 +262,7 @@ void relselectCommand(client* c) {
         if(*(char*)(c->argv[5]->ptr) == NULL)
             having_clause = NULL;
     }
-    int having_literal = -1;
+    long long having_literal = -1;
     int is_having_count = 0, is_having_sum = 0;
     int having_col_idx = -1;
     if(having_clause != NULL) {
@@ -397,13 +397,13 @@ void relselectCommand(client* c) {
             else if((where_clause != NULL && parse_where(where_clause, strlen(where_clause), tableObj, NULL, i, 0)) ||
                     where_clause == NULL) {
                 for(int j = 0; j < table_column_argc; j++) {
-                    if(table_is_sum[j]) sum[j] += atoi(tableObj->table[i][a2i[j]]);
+                    if(table_is_sum[j]) sum[j] += strtoll(tableObj->table[i][a2i[j]], NULL, 10);
                     if(table_is_count[j]) count[j]++;
                     fprintf(stderr, "having_col_idx = %d, a2i[j] = %d\n", having_col_idx, a2i[j]);
                     if(having_col_idx == a2i[j]) {
                         fprintf(stderr, "j = %d, i = %d, table[%d][%d] = %s\n", j, i, i, a2i[j], tableObj->table[i][a2i[j]]);
                         if(is_having_count) h_count++;
-                        else h_sum += atoi(tableObj->table[i][a2i[j]]);
+                        else h_sum += strtoll(tableObj->table[i][a2i[j]], NULL, 10);
                     }
                     fprintf(stderr, "group_target_idx = %d, having clause = %x\n", group_target_idx, having_clause);
 
@@ -465,41 +465,41 @@ void relselectCommand(client* c) {
     return;
 }
 
-int get_having_literal(char *cond) {
-    int ret = -1;
+long long get_having_literal(char *cond) {
+    long long ret = -1;
     char *iter = cond;
     while(*iter != '#' && *iter != '"')
         iter++;
     iter++;
-    ret = atoi(iter);
+    ret = strtoll(iter, NULL, 10);
     return ret;
 }
 
-int equal_less(long long sum_or_count, int literal) {
+int equal_less(long long sum_or_count, long long literal) {
     return sum_or_count <= literal;
 }
 
-int equal(long long sum_or_count, int literal) {
+int equal(long long sum_or_count, long long literal) {
     return sum_or_count == literal;
 }
 
-int equal_greater(long long sum_or_count, int literal) {
+int equal_greater(long long sum_or_count, long long literal) {
     return sum_or_count >= literal;
 }
 
-int not_equal(long long sum_or_count, int literal) {
+int not_equal(long long sum_or_count, long long literal) {
     return !(sum_or_count == literal);
 }
 
-int less(long long sum_or_count, int literal) {
+int less(long long sum_or_count, long long literal) {
     return sum_or_count < literal;
 }
 
-int greater(long long sum_or_count, int literal) {
+int greater(long long sum_or_count, long long literal) {
     return sum_or_count > literal;
 }
 
-int having_op(char *cond, long long sum_or_count, int literal) {
+int having_op(char *cond, long long sum_or_count, long long literal) {
     char* iter = cond;
     while(*iter != '<' && *iter != '=' && *iter != '>'
             && *iter != '!')
