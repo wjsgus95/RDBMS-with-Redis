@@ -378,8 +378,8 @@ void set_unit_op(char* str, robj* tableObj, int idx){
     char* str1;
     char* str2;
     char op;
-    double val1, val2;
-    int retval;
+    long long val1, val2;
+    long long retval;
     int n_digits;
     int i;
     //char** row = (char ***) tableObj + idx;
@@ -444,19 +444,19 @@ void set_unit_op(char* str, robj* tableObj, int idx){
         col_idx2 = get_col_idx(str1, tableObj->column, tableObj->column_length);
         if (col_idx2 != -1){
             fprintf(stderr, "row[%d] = %s\n", col_idx2, row[col_idx2]);
-            val1 = strtod(row[col_idx2], NULL);
+            val1 = strtoll(row[col_idx2], NULL, 10);
         }
         else
-            val1 = strtod(str1, NULL);
+            val1 = strtoll(str1, NULL, 10);
         col_idx2 = get_col_idx(str2, tableObj->column, tableObj->column_length);
         if (col_idx2 != -1)
-            val2 = strtod(row[col_idx2], NULL);
+            val2 = strtoll(row[col_idx2], NULL, 10);
         else
-            val2 = strtod(str2, NULL);
+            val2 = strtoll(str2, NULL, 10);
         free(str1);
         free(str2);
         // obtain result
-        fprintf(stderr, "val1 = %.1f, val2 = %.1f\n", val1, val2);
+        fprintf(stderr, "val1 = %lld, val2 = %lld\n", val1, val2);
         switch(op){
             case '+':
                 val1 += val2;
@@ -472,11 +472,11 @@ void set_unit_op(char* str, robj* tableObj, int idx){
                 return;
         }
         // save the result
-        retval = (int) val1;
-        fprintf(stderr, "retval = %d\n", retval);
+        retval = val1;
+        fprintf(stderr, "retval = %lld\n", retval);
         n_digits = (int)((ceil(log10(retval))+1)*sizeof(char));
         str1 = (char*) calloc(1, n_digits);
-        sprintf(str1, "%d", retval);
+        sprintf(str1, "%lld", retval);
         free(row[col_idx]);
         row[col_idx] = str1;
         return;

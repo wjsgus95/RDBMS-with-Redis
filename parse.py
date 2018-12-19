@@ -186,6 +186,7 @@ class UpdateParser:
     def __init__(self, statement):
         statement = parse_strings(statement)
         statement = remove_extra_blanks(statement)
+        statement = split_commas(statement)
         self.statement = statement
         self.splitted = statement.split(' ')
         self.operators = ['=', '+', '-', '*']
@@ -473,5 +474,5 @@ if __name__ == "__main__":
     print(parse_select(select_query))
     #import ipdb; ipdb.set_trace()
 
-    query = 'update student set id=id-5, name = "wilson2" where name like "h%"'
+    query = 'update student set name="wilson2",id=id-5 where name>2015000000;'
     print(parse_update(query))
