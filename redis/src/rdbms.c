@@ -379,16 +379,21 @@ void relselectCommand(client* c) {
                 for(int j = 0; j < table_column_argc; j++) {
                     if(table_is_sum[j]) sum[j] += atoi(tableObj->table[i][a2i[j]]);
                     if(table_is_count[j]) count[j]++;
+                    fprintf(stderr, "having_col_idx = %d, a2i[j] = %d\n", having_col_idx, a2i[j]);
                     if(having_col_idx == a2i[j]) {
                         fprintf(stderr, "j = %d, i = %d, table[%d][%d] = %s\n", j, i, i, a2i[j], tableObj->table[i][a2i[j]]);
                         if(is_having_count) h_count++;
                         else h_sum += atoi(tableObj->table[i][a2i[j]]);
                     }
+                    fprintf(stderr, "group_target_idx = %d, having clause = %x\n", group_target_idx, having_clause);
 
                     if((group_target_idx >= 0 && is_distinct) || group_target_idx < 0) {
                         if(having_clause == NULL) {
-                            if(group_target_idx < 0 && i != tableObj->length - 1)
-                                continue;
+                            fprintf(stderr, "i=%d, tableObj->length=%d\n", i, tableObj->length);
+                            if (global_is_sum || global_is_count){
+                                if(!table_is_sum[j] && !table_is_count[j] && group_target_idx < 0 && i != tableObj->length - 1)
+                                    continue;
+                            }
                             if(table_is_sum[j]) {
                                 addReplyLongLong(c, sum[j]);
                             } else if(table_is_count[j]) {
