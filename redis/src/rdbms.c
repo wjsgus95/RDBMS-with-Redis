@@ -361,6 +361,7 @@ void relselectCommand(client* c) {
     // if select columns
     else {
         char *group_distinct_iter = tableObj->table[0][group_target_idx];
+        int last_where_idx = 0;
 
         long long sum[100], count[100];
         memset(sum, 0, 100*sizeof(long long));
@@ -373,8 +374,21 @@ void relselectCommand(client* c) {
             int is_distinct = 0;
             if(group_target_idx >= 0 && strcmp(group_distinct_iter, tableObj->table[(i+1)%(tableObj->length)][group_target_idx]) != 0) 
                 is_distinct = 1;
-                
-            if((where_clause != NULL && parse_where(where_clause, strlen(where_clause), tableObj, NULL, i, 0)) ||
+
+            if((where_clause != NULL && !parse_where(where_clause, strlen(where_clause), tableObj, NULL, i, 0)) &&
+                    i == tableObj->length - 1 && (global_is_sum || global_is_count)) {
+                for(int j = 0; j < table_column_argc; j++) {
+                    if(table_is_sum[j]) {
+                        addReplyLongLong(c, sum[j]);
+                    } else if(table_is_count[j]) {
+                        addReplyLongLong(c, count[j]);
+                    } else {
+                        addReplyBulkCBuffer(c, tableObj->table[last_where_idx][a2i[j]], strlen(tableObj->table[last_where_idx][a2i[j]]));
+                    }
+                    numret++;
+                }
+            }
+            else if((where_clause != NULL && parse_where(where_clause, strlen(where_clause), tableObj, NULL, i, 0)) ||
                     where_clause == NULL) {
                 for(int j = 0; j < table_column_argc; j++) {
                     if(table_is_sum[j]) sum[j] += atoi(tableObj->table[i][a2i[j]]);
@@ -391,8 +405,11 @@ void relselectCommand(client* c) {
                         if(having_clause == NULL) {
                             fprintf(stderr, "i=%d, tableObj->length=%d\n", i, tableObj->length);
                             if (global_is_sum || global_is_count){
-                                if(group_target_idx < 0 && i != tableObj->length - 1)
+                                if(group_target_idx < 0 && i != tableObj->length - 1) {
+                                    if(where_clause != NULL) 
+                                        last_where_idx = i;
                                     continue;
+                                }
                             }
                             if(table_is_sum[j]) {
                                 addReplyLongLong(c, sum[j]);
