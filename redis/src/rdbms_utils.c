@@ -106,7 +106,7 @@ int greater_than(char* val1, char* val2, char* type){
     // in case of type == "int"
     if (strcmp(type, "int") == 0){
         // type conversion from str to int
-        if (atoi(val1) > atoi(val2)){
+        if (strtoll(val1) > strtoll(val2)){
             return 1;
         }
         else{
