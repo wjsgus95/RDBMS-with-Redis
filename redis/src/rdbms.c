@@ -391,7 +391,7 @@ void relselectCommand(client* c) {
                         if(having_clause == NULL) {
                             fprintf(stderr, "i=%d, tableObj->length=%d\n", i, tableObj->length);
                             if (global_is_sum || global_is_count){
-                                if(!table_is_sum[j] && !table_is_count[j] && group_target_idx < 0 && i != tableObj->length - 1)
+                                if(group_target_idx < 0 && i != tableObj->length - 1)
                                     continue;
                             }
                             if(table_is_sum[j]) {
