@@ -43,11 +43,13 @@ def split_operators(statement_list, operators):
     modified = []
     for i, s in enumerate(statement_list):
         if len(s) > 1:
-            for op in operators[:-1]:
+            for op in operators:
                 if op in s:
-                    statement_list[i] = s.split(op)
-                    statement_list[i].insert(1, op)
-                    break
+                    if not isinstance(s, list):
+                        statement_list[i] = []
+                    temp =  s.split(op)
+                    temp.insert(1, op)
+                    statement_list[i] += temp
     #statement_list = functools.reduce(operator.iconcat, statement_list, [])
     for s in statement_list:
         if isinstance(s, list):
@@ -195,6 +197,7 @@ class UpdateParser:
         f = ' '.join(self.splitted[self.f_start:self.f_end])
         f_list = f.split(' ')
         f_list = split_operators(f_list, self.operators)
+        print(f_list)
         tokenized = []
         for i, val in enumerate(f_list):
             if i == 0:
@@ -334,7 +337,7 @@ class WhereParser:
         statement = remove_outer_brackets(statement)
         self.statement = statement
         statement_list = statement.split(' ')
-        statement_list = split_operators(statement_list, self.conditional_operators)
+        statement_list = split_operators(statement_list, self.conditional_operators[:-1])
         statement_list = [s for s in statement_list if s != '']
         statement_list = self.uncapitalize_keywords(statement_list)
         return statement_list
@@ -434,7 +437,7 @@ if __name__ == "__main__":
     insert_query1 = 'Insert INTO hello__haha \n VALUES \n (\"hey  hey\", 10, 25, \' hallo\')'
     insert_query2 = 'insert into KAkaKA \n (ha, he, hu, he) \n values \t (\"hey  hey\", 10, 25, \' hallo\')'
     delete_query = 'Delete  from student ,   teacher   WHERE student.id   > teacher.id and (( (  student.name like \"Myeon%Pyeo_\"  )) or   student.dept  =   \"C/S\")'
-    update_query = 'UPDATE hello SET a =   \'10\'  , b= c + 3, CCAAS = \"haha  \" where (a > 10 or DeF_PP like \"5%a%b_C\") and (CCB=3);'
+    update_query = 'UPDATE hello SET a =   \'10\'  , b= c - 3, CCAAS = \"haha  \" where (a > 10 or DeF_PP like \"5%a%b_C\") and (CCB=3);'
     select_query = 'select id,name,  count( ( dept))   , sum(adress )  From  student, teacher  WHERE (a > f   and b !=3 ) or (cc=\'and hello\' AND dd!=\'or\') and DF LIKE \'A%b\''
     create_parser = Parser(create_query)
     insert_parser1 = Parser(insert_query1)
@@ -462,5 +465,5 @@ if __name__ == "__main__":
     print(parse_select(select_query))
     #import ipdb; ipdb.set_trace()
 
-    query = 'update student set id = 4000, name = "wilson2" where name = "wilson"'
+    query = 'update student set id=id-5, name = "wilson2" where name like "h%"'
     print(parse_update(query))
