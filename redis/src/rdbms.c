@@ -397,14 +397,21 @@ void relselectCommand(client* c) {
             else if((where_clause != NULL && parse_where(where_clause, strlen(where_clause), tableObj, NULL, i, 0)) ||
                     where_clause == NULL) {
                 for(int j = 0; j < table_column_argc; j++) {
-                    if(table_is_sum[j]) sum[j] += strtoll(tableObj->table[i][a2i[j]], NULL, 10);
-                    if(table_is_count[j]) count[j]++;
-                    fprintf(stderr, "having_col_idx = %d, a2i[j] = %d\n", having_col_idx, a2i[j]);
                     if(having_col_idx == a2i[j]) {
-                        fprintf(stderr, "j = %d, i = %d, table[%d][%d] = %s\n", j, i, i, a2i[j], tableObj->table[i][a2i[j]]);
                         if(is_having_count) h_count++;
                         else h_sum += strtoll(tableObj->table[i][a2i[j]], NULL, 10);
                     }
+                }
+
+                for(int j = 0; j < table_column_argc; j++) {
+                    if(table_is_sum[j]) sum[j] += strtoll(tableObj->table[i][a2i[j]], NULL, 10);
+                    if(table_is_count[j]) count[j]++;
+                    fprintf(stderr, "having_col_idx = %d, a2i[j] = %d\n", having_col_idx, a2i[j]);
+                    //if(having_col_idx == a2i[j]) {
+                    //    fprintf(stderr, "j = %d, i = %d, table[%d][%d] = %s\n", j, i, i, a2i[j], tableObj->table[i][a2i[j]]);
+                    //    if(is_having_count) h_count++;
+                    //    else h_sum += strtoll(tableObj->table[i][a2i[j]], NULL, 10);
+                    //}
                     fprintf(stderr, "group_target_idx = %d, having clause = %x\n", group_target_idx, having_clause);
 
                     if((group_target_idx >= 0 && is_distinct) || group_target_idx < 0) {
