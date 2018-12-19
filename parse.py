@@ -417,7 +417,7 @@ class WhereParser:
     def encode(self):
         if self.token_list == '':
             return ''
-        encoded =  self.inorder_tuple_traversal(self.parse()).replace('\'', '').replace('\"', '').replace('$', '\"')
+        encoded =  self.inorder_tuple_traversal(self.parse()).replace('\'', '').replace('\"', '').replace('$', '\"').replace('@', ' ')
 
         return encoded.encode('ascii')
 
@@ -476,3 +476,5 @@ if __name__ == "__main__":
 
     query = 'update student set name="wilson2",id=id-5 where name>2015000000;'
     print(parse_update(query))
+    query = 'insert into enroll values (2015147587, "mjpyeon", 10000, "CS50", 5000, "harvard prof1")'
+    print(parse_insert(query))
