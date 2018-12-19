@@ -212,6 +212,12 @@ void reldeleteCommand(client* c) {
 void relselectCommand(client* c) {
     robj* tableObj = lookupKeyRead(c->db, c->argv[1]);
 
+    if(tableObj == NULL) {
+        addReplyMultiBulkLen(c, 1);
+        addReplyBulkCBuffer(c, "Table Does Not Exist", sizeof("Table Does Not Exist")-1);
+        return;
+    }
+
     if(tableObj->length == 0) {
         addReplyMultiBulkLen(c, 1);
         addReplyBulkCBuffer(c, "Empty", sizeof("Empty")-1);

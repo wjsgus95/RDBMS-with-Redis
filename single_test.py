@@ -8,6 +8,7 @@ N = 10
 
 db = DataBase(r)
 
+'''
 r.execute_command('relcreate', 'student', 'id', 'name', 'int', 'varchar')
 
 r.execute_command('relinsert', 'student', '\r1223222', '\ramber')
@@ -27,9 +28,10 @@ r.execute_command('relinsert', 'student', '\r3423232', '\rvincent')
 r.execute_command('relinsert', 'student', '\r1313131', '\rdean')
 r.execute_command('relinsert', 'student', '\r3232323', '\rowen')
 r.execute_command('relinsert', 'student', '\r1234567', '\rwilson')
+'''
 
-result = r.execute_command('relselect', 'student', 'id\rname')
-print(result)
+#result = r.execute_command('relselect', 'student', 'id\rname')
+#print(result)
 #result = r.execute_command('relselect', 'student', 's:id\r:name', '', 'name')
 #print(result)
 #result = r.execute_command('relselect', 'student', 'c:id\r:name', '', 'name')
