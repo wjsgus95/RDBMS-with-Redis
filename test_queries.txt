@@ -3,6 +3,7 @@ yes
 select * from student where id > 1;
 
 select name, count(name) from student where name like "ha%";
+select name, count(name) from student where name like "kkkkkkkkk";
 select name from student where name like "ha%";
 select count(name), name from student;
 select name, id from student where name = "amber";

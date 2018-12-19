@@ -367,7 +367,7 @@ void relselectCommand(client* c) {
     // if select columns
     else {
         char *group_distinct_iter = tableObj->table[0][group_target_idx];
-        int last_where_idx = 0;
+        int last_where_idx = -1;
 
         long long sum[100], count[100];
         memset(sum, 0, 100*sizeof(long long));
@@ -382,7 +382,7 @@ void relselectCommand(client* c) {
                 is_distinct = 1;
 
             if((where_clause != NULL && !parse_where(where_clause, strlen(where_clause), tableObj, NULL, i, 0)) &&
-                    i == tableObj->length - 1 && (global_is_sum || global_is_count)) {
+                    i == tableObj->length - 1 && (global_is_sum || global_is_count) && last_where_idx >= 0) {
                 for(int j = 0; j < table_column_argc; j++) {
                     if(table_is_sum[j]) {
                         addReplyLongLong(c, sum[j]);
