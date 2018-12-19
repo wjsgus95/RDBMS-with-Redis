@@ -123,6 +123,7 @@ int greater_than(char* val1, char* val2, char* type){
     }
 }
 
+/*
 int like(char* regexp, char* text) {
     char* val_iter = text;
     char* re_iter  = regexp;
@@ -147,26 +148,27 @@ int like(char* regexp, char* text) {
     else return 0;
 }
 
-/*
+*/
 int like(char* regexp, char* text){
+    fprintf(stderr, "like func with regexp=%s and text=%s\n", regexp, text);
     if (regexp[0] == '\0')
         return 1;
-    if (regexp[1] == '%')
-        return like_star(regexp[0], regexp+2, text);
+    if (regexp[0] == '%')
+        return like_star(regexp+1, text);
     if (*text!='\0' && (regexp[0]=='_' || regexp[0]==*text))
         return like(regexp+1, text+1);
     return 0;
 }
 
-int like_star(char c, char* regexp, char* text){
+int like_star(char* regexp, char* text){
     char* iter = text;
     do {
         if (like(regexp, iter))
             return 1;
-    } while (*iter != '\0' && (*iter++ == c || c == '.'));
+    } while (*iter++ != '\0');
+    fprintf(stderr, "star failed with *iter=%c and regexp=%s\n", *iter, regexp);
     return 0;
 }
-*/
 
 int get_col_idx(char* col_query, char** col, int n_cols){
     int i;

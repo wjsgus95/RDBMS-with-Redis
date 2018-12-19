@@ -2146,7 +2146,7 @@ int parse_terminal_size(char* str, int offset);
 int equal_to(char* val1, char* val2);
 int greater_than(char* val1, char* val2, char* type);
 int like(char* regexp, char* text);
-int like_star(char c, char* regexp, char* text);
+int like_star(char* regexp, char* text);
 int get_col_idx(char* col_query, char** col, int n_cols);
 char* get_row_val(char* col_query, robj* tableObj, int row_idx);
 int run_unit_cond_op(int op, char* param1, char* param2, char op_type, robj* tableObj1, robj* tableObj2, int idx1, int idx2);
