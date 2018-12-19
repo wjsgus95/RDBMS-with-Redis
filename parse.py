@@ -197,7 +197,6 @@ class UpdateParser:
         f = ' '.join(self.splitted[self.f_start:self.f_end])
         f_list = f.split(' ')
         f_list = split_operators(f_list, self.operators)
-        print(f_list)
         tokenized = []
         for i, val in enumerate(f_list):
             if i == 0:
