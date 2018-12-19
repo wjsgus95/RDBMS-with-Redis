@@ -4,3 +4,4 @@
 redis.info
 lcov-html
 tags
+release.h
