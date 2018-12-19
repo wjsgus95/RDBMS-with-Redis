@@ -41,15 +41,24 @@ def parse_strings(statement):
 
 def split_operators(statement_list, operators):
     modified = []
+    detected = []
+    flag = False
     for i, s in enumerate(statement_list):
         if len(s) > 1:
             for op in operators:
                 if op in s:
+                    for d in detected:
+                        if op in d:
+                            flag = True
+                    if flag:
+                        flag = False
+                        continue
                     if not isinstance(s, list):
                         statement_list[i] = []
                     temp =  s.split(op)
                     temp.insert(1, op)
                     statement_list[i] += temp
+                    detected.append(op)
     #statement_list = functools.reduce(operator.iconcat, statement_list, [])
     for s in statement_list:
         if isinstance(s, list):
@@ -458,7 +467,7 @@ if __name__ == "__main__":
 
     insert_query = 'insert into student values(20123123, "student1" );'
     print(parse_insert(insert_query))
-    select_query = 'select name from student where (id < 30000000 and name = "wilson") or (id > 40000000 and name = "fredrick") group by name having count(id) > 1000'
+    select_query = 'select name from student where (id <= 30000000 and name = "wilson") or (id > 40000000 and name = "fredrick") group by name having count(id) > 1000'
     print(parse_select(select_query))
     select_query = 'select name from student group by name having count(name) > 1'
     print(parse_select(select_query))
