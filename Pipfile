@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 redis = "*"
+redis-py-cluster = "*"
 
 [dev-packages]
 
