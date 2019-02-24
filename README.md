@@ -1,4 +1,4 @@
-## RDBMS Using with Redis
+## RDBMS Interface with Redis
 
 User Interface in python tokenizes and parses given SQL queries and executes them on redis cluster.
 
