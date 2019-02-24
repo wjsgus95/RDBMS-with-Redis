@@ -1,0 +1,15 @@
+yes
+
+select * from student where id > 1;
+
+select name, count(name) from student where name like "ha%";
+select name, count(name) from student where name like "kkkkkkkkk";
+select name from student where name like "ha%";
+select count(name), name from student;
+select name, id from student where name = "amber";
+select count(name) from student where name like "a%";
+select sum(id) from student where name like "a%";
+select * from student group by name having count(name)=3;
+select name from student group by name having count(name)=2;
+select id from student where (id > 100000 and id < 5000) or (name like "a%_" or name like "_ak%");
+
